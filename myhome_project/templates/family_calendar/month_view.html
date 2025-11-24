@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load dict_extras %}
 <html lang="zh-hans">
 <head>
     <meta charset="UTF-8">
@@ -297,17 +298,21 @@
                                             <div class="date-container">
                                                 <a href="{% url 'family_calendar:day_view' year month day %}" class="text-decoration-none">
                                                     <div class="solar-date">{{ day }}</div>
-                                                    {% if day in lunar_data %}
-                                                        <div class="lunar-date">
-                                                            {% if lunar_data.day.festival %}{{ lunar_data.day.festival }}{% else %}{{ lunar_data.day.day }}{% endif %}
+                                                    {% with lunar_day=lunar_data|get_item:day %}
+                                                        {% if lunar_day %}
+                                                            <div class="lunar-date">
+                                                                {% if lunar_day.festival %}{{ lunar_day.festival }}{% else %}{{ lunar_day.day }}{% endif %}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </a>
+                                                {% with holiday=holidays|get_item:day %}
+                                                    {% if holiday %}
+                                                        <div class="holiday" title="{{ holiday }}">
+                                                            {{ holiday }}
                                                         </div>
                                                     {% endif %}
-                                                </a>
-                                                {% if day in holidays %}
-                                                    <div class="holiday" title="{{ holidays.day }}">
-                                                        {{ holidays.day }}
-                                                    </div>
-                                                {% endif %}
+                                                {% endwith %}
                                             </div>
                                             <div class="events-container">
                                                 {% for date_key, day_events in events_by_date.items %}
