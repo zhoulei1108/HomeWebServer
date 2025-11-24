@@ -6,7 +6,7 @@ register = template.Library()
 @register.filter
 def get_item(mapping, key):
     """
-    安全地从字典或类字典对象中取值，避免模板中访问不存在的键导致报错。
+    从字典或类字典对象中取值，避免模板访问不存在键时报错。
     """
     if mapping is None:
         return None
@@ -18,3 +18,4 @@ def get_item(mapping, key):
             return mapping[key]
         except Exception:
             return None
+

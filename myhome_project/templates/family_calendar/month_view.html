@@ -245,9 +245,14 @@
                             </div>
                         </div>
                     {% else %}
-                        <a href="/accounts/login/" class="btn btn-sm btn-primary">
-                            <i class="fas fa-sign-in-alt me-1"></i>登录
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'login' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-sign-in-alt me-1"></i>登录
+                            </a>
+                            <a href="{% url 'register' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-user-plus me-1"></i>注册
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -291,42 +296,39 @@
                             {% if day == 0 %}
                                 <td class="other-month"></td>
                             {% else %}
-                                {% now "Y-m-d" as today %}
-                                {% with current_date=year|add:"-"|add:month|add:"-"|add:day %}
-                                    {% with week_day=forloop.counter0 %}
-                                        <td class="{% if today == current_date %}today{% endif %} {% if week_day == 0 or week_day == 6 %}weekend{% else %}weekday{% endif %}">
-                                            <div class="date-container">
-                                                <a href="{% url 'family_calendar:day_view' year month day %}" class="text-decoration-none">
-                                                    <div class="solar-date">{{ day }}</div>
-                                                    {% with lunar_day=lunar_data|get_item:day %}
-                                                        {% if lunar_day %}
-                                                            <div class="lunar-date">
-                                                                {% if lunar_day.festival %}{{ lunar_day.festival }}{% else %}{{ lunar_day.day }}{% endif %}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endwith %}
-                                                </a>
-                                                {% with holiday=holidays|get_item:day %}
-                                                    {% if holiday %}
-                                                        <div class="holiday" title="{{ holiday }}">
-                                                            {{ holiday }}
+                                {% with week_day=forloop.counter0 %}
+                                    <td class="{% if today.year == year and today.month == month and today.day == day %}today{% endif %} {% if week_day == 0 or week_day == 6 %}weekend{% else %}weekday{% endif %}">
+                                        <div class="date-container">
+                                            <a href="{% url 'family_calendar:day_view' year month day %}" class="text-decoration-none">
+                                                <div class="solar-date">{{ day }}</div>
+                                                {% with lunar_day=lunar_data|get_item:day %}
+                                                    {% if lunar_day %}
+                                                        <div class="lunar-date">
+                                                            {% if lunar_day.festival %}{{ lunar_day.festival }}{% else %}{{ lunar_day.day }}{% endif %}
                                                         </div>
                                                     {% endif %}
                                                 {% endwith %}
-                                            </div>
-                                            <div class="events-container">
-                                                {% for date_key, day_events in events_by_date.items %}
-                                                    {% if date_key.year == year and date_key.month == month and date_key.day == day %}
-                                                        {% for event in day_events %}
-                                                            <div class="event-item" title="{{ event.name }}">
-                                                                {{ event.name }}
-                                                            </div>
-                                                        {% endfor %}
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        </td>
-                                    {% endwith %}
+                                            </a>
+                                            {% with holiday=holidays|get_item:day %}
+                                                {% if holiday %}
+                                                    <div class="holiday" title="{{ holiday }}">
+                                                        {{ holiday }}
+                                                    </div>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                        <div class="events-container">
+                                            {% with day_events=events_by_day|get_item:day %}
+                                                {% if day_events %}
+                                                    {% for event in day_events %}
+                                                        <div class="event-item" title="{{ event.name }}">
+                                                            {{ event.name }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                    </td>
                                 {% endwith %}
                             {% endif %}
                         {% endfor %}

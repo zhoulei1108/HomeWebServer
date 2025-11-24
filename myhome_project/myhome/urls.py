@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import path, include
 from django.shortcuts import redirect
+from django.urls import path, include, reverse_lazy
+
+from apps.family_calendar import views as calendar_views
 
 urlpatterns = [
     # 根路径重定向到日历页面
@@ -25,8 +27,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # 手动配置认证URL
     path("accounts/", lambda request: redirect('login'), name="accounts"),
-    path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
-    path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path(
+        "accounts/login/",
+        auth_views.LoginView.as_view(template_name="registration/login.html"),
+        name="login",
+    ),
+    path("accounts/logout/", calendar_views.logout_view, name="logout"),
+    path("accounts/register/", calendar_views.register, name="register"),
     path("accounts/password_change/", auth_views.PasswordChangeView.as_view(), name="password_change"),
     path("accounts/password_change/done/", auth_views.PasswordChangeDoneView.as_view(), name="password_change_done"),
     path("accounts/password_reset/", auth_views.PasswordResetView.as_view(), name="password_reset"),

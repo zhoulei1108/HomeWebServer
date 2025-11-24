@@ -1,14 +1,161 @@
-from django.shortcuts import render
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpResponse
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from datetime import datetime, timedelta, date
-from calendar import monthcalendar
+from calendar import monthcalendar, monthrange
+
 from apps.events.models import Event
+
 try:
-    from chinese_holidays import get_holidays
+    from lunardate import LunarDate
+
+    LUNAR_AVAILABLE = True
+except ImportError:
+    LUNAR_AVAILABLE = False
+
+try:
+    import chinese_calendar
+    from chinese_calendar.constants import Holiday
+
     HOLIDAYS_AVAILABLE = True
 except ImportError:
+    chinese_calendar = None
+    Holiday = None
     HOLIDAYS_AVAILABLE = False
+
+
+LUNAR_DAY_NAMES = {
+    1: "初一",
+    2: "初二",
+    3: "初三",
+    4: "初四",
+    5: "初五",
+    6: "初六",
+    7: "初七",
+    8: "初八",
+    9: "初九",
+    10: "初十",
+    11: "十一",
+    12: "十二",
+    13: "十三",
+    14: "十四",
+    15: "十五",
+    16: "十六",
+    17: "十七",
+    18: "十八",
+    19: "十九",
+    20: "二十",
+    21: "廿一",
+    22: "廿二",
+    23: "廿三",
+    24: "廿四",
+    25: "廿五",
+    26: "廿六",
+    27: "廿七",
+    28: "廿八",
+    29: "廿九",
+    30: "三十",
+}
+
+LUNAR_FESTIVALS = {
+    (1, 1): "春节",
+    (1, 15): "元宵节",
+    (2, 2): "龙抬头",
+    (5, 5): "端午节",
+    (7, 7): "七夕节",
+    (8, 15): "中秋节",
+    (9, 9): "重阳节",
+    (12, 8): "腊八节",
+    (12, 24): "小年",
+    (12, 30): "除夕",
+}
+
+
+def build_lunar_data(year, month):
+    """根据公历年月计算当月农历信息。"""
+    if not LUNAR_AVAILABLE:
+        return {}
+
+    lunar_data = {}
+    _, last_day = monthrange(year, month)
+    for day in range(1, last_day + 1):
+        try:
+            lunar_date = LunarDate.fromSolarDate(year, month, day)
+        except ValueError:
+            continue
+
+        festival = LUNAR_FESTIVALS.get((lunar_date.month, lunar_date.day), "")
+        lunar_data[day] = {
+            "day": LUNAR_DAY_NAMES.get(lunar_date.day, str(lunar_date.day)),
+            "festival": festival,
+        }
+    return lunar_data
+
+
+HOLIDAY_NAME_MAP = {}
+if Holiday:
+    HOLIDAY_NAME_MAP.update(
+        {
+            getattr(Holiday, "NewYearsDay", None): "元旦",
+            getattr(Holiday, "SpringFestival", None): "春节",
+            getattr(Holiday, "QingMingFestival", None): "清明节",
+            getattr(Holiday, "LabourDay", None): "劳动节",
+            getattr(Holiday, "DragonBoatFestival", None): "端午节",
+            getattr(Holiday, "MidAutumnFestival", None): "中秋节",
+            getattr(Holiday, "NationalDay", None): "国庆节",
+            getattr(Holiday, "NewYearsEve", None): "除夕",
+            getattr(Holiday, "LanternFestival", None): "元宵节",
+            getattr(Holiday, "ValentinesDay", None): "情人节",
+            getattr(Holiday, "ChristmasDay", None): "圣诞节",
+        }
+    )
+    HOLIDAY_NAME_MAP.pop(None, None)
+
+
+HOLIDAY_STRING_MAP = {
+    "new year's day": "元旦",
+    "spring festival": "春节",
+    "lantern festival": "元宵节",
+    "kingming festival": "清明节",
+    "qingming festival": "清明节",
+    "tomb-sweeping day": "清明节",
+    "labour day": "劳动节",
+    "dragon boat festival": "端午节",
+    "mid-autumn festival": "中秋节",
+    "national day": "国庆节",
+    "new year's eve": "除夕",
+    "valentine's day": "情人节",
+    "christmas day": "圣诞节",
+}
+
+
+def build_holiday_map(start_date, end_date):
+    """返回指定日期范围内的中国法定节假日。"""
+    holidays = {}
+    if not HOLIDAYS_AVAILABLE:
+        return holidays
+
+    current = start_date
+    while current <= end_date:
+        is_holiday, holiday_name = chinese_calendar.get_holiday_detail(current)
+        if is_holiday and holiday_name:
+            label = HOLIDAY_NAME_MAP.get(holiday_name)
+            if not label:
+                label = getattr(holiday_name, "value", str(holiday_name))
+            if isinstance(label, str):
+                label = HOLIDAY_STRING_MAP.get(label.lower(), label)
+            holidays[current.day] = label
+        current += timedelta(days=1)
+    return holidays
+
+
+def _apply_form_control_styles(form):
+    """为 Django 表单字段追加 Bootstrap 样式。"""
+    for field in form.fields.values():
+        current_class = field.widget.attrs.get("class", "")
+        field.widget.attrs["class"] = (current_class + " form-control").strip()
 
 
 def get_monthly_weekend_dates(year, month, week_order):
@@ -59,95 +206,28 @@ def month_view(request, year=None, month=None):
     else:
         end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
     
-    # 获取节假日数据
-    holidays = {}
-    if HOLIDAYS_AVAILABLE:
-        try:
-            holidays_data = get_holidays(year)
-            for holiday in holidays_data:
-                holiday_date = datetime.strptime(holiday['date'], '%Y-%m-%d').date()
-                if holiday_date.month == month:
-                    holidays[holiday_date.day] = holiday['name']
-        except:
-            pass
-    
-    # 简化的农历数据 - 使用预定义的重要节日
-    lunar_festivals = {
-        '1-1': '春节',
-        '1-15': '元宵节',
-        '2-2': '龙抬头',
-        '5-5': '端午节',
-        '7-7': '七夕节',
-        '8-15': '中秋节',
-        '9-9': '重阳节',
-        '10-1': '寒衣节',
-        '10-15': '下元节',
-        '12-8': '腊八节',
-        '12-23': '小年',
-        '12-30': '除夕'
-    }
-    
-    # 简化的农历数据 - 使用预定义的重要节日和简单农历显示
-    lunar_data = {}
-    
-    # 预定义的一些重要农历节日对应的公历日期（2024-2025年）
-    predefined_lunar_dates = {
-        2024: {
-            2: {10: '春节', 24: '元宵节'},
-            4: {4: '清明'},
-            6: {10: '端午节'},
-            8: {18: '中秋节'},
-            9: {17: '重阳节'}
-        },
-        2025: {
-            1: {29: '春节', 12: '元宵节'},
-            3: {31: '清明'},
-            5: {31: '端午节'},
-            9: {6: '中秋节'},
-            10: {6: '重阳节'}
-        }
-    }
-    
-    # 为每一天添加基本的农历日期显示
-    for day in range(1, 32):
-        try:
-            current_date = date(year, month, day)
-            # 简单的农历日期计算（显示初一、十五等）
-            day_of_month = current_date.day
-            
-            lunar_day_info = ''
-            if day_of_month == 1:
-                lunar_day_info = '初一'
-            elif day_of_month == 15:
-                lunar_day_info = '十五'
-            else:
-                lunar_day_info = str(day_of_month)
-            
-            # 检查是否有节日
-            festival = ''
-            if year in predefined_lunar_dates and month in predefined_lunar_dates[year]:
-                if day in predefined_lunar_dates[year][month]:
-                    festival = predefined_lunar_dates[year][month][day]
-            
-            lunar_data[day] = {
-                'day': lunar_day_info,
-                'festival': festival
-            }
-        except:
-            continue
+    holidays = build_holiday_map(start_date, end_date)
+    lunar_data = build_lunar_data(year, month)
     
     # 获取所有启用的事件，并计算它们在指定月份的发生情况
     events_by_date = {}
+    events_by_day = {}
     active_events = Event.objects.active()
+
+    def store_event(target_date, event):
+        if target_date not in events_by_date:
+            events_by_date[target_date] = []
+        events_by_date[target_date].append(event)
+
+        if target_date.year == year and target_date.month == month:
+            events_by_day.setdefault(target_date.day, []).append(event)
     
     for event in active_events:
         # 根据事件类型计算在该月的具体日期
         if event.event_type == Event.TYPE_ONE_TIME:
             # 一次性事件：检查是否在该月
             if event.date and start_date <= event.date <= end_date:
-                if event.date not in events_by_date:
-                    events_by_date[event.date] = []
-                events_by_date[event.date].append(event)
+                store_event(event.date, event)
                 
         elif event.event_type == Event.TYPE_ANNUAL:
             # 年度事件：检查月日是否匹配
@@ -155,9 +235,7 @@ def month_view(request, year=None, month=None):
                 try:
                     annual_date = date(year, event.date.month, event.date.day)
                     if start_date <= annual_date <= end_date:
-                        if annual_date not in events_by_date:
-                            events_by_date[annual_date] = []
-                        events_by_date[annual_date].append(event)
+                        store_event(annual_date, event)
                 except ValueError:
                     # 处理闰年2月29日等问题
                     pass
@@ -165,18 +243,14 @@ def month_view(request, year=None, month=None):
         elif event.event_type == Event.TYPE_REMINDER:
             # 提醒事件：检查是否在该月
             if event.date and start_date <= event.date <= end_date:
-                if event.date not in events_by_date:
-                    events_by_date[event.date] = []
-                events_by_date[event.date].append(event)
+                store_event(event.date, event)
                 
         elif event.event_type == Event.TYPE_MONTHLY_WEEKEND:
             # 每月第N个周末：计算该月的第N个周末
             if event.week_order:
                 weekend_dates = get_monthly_weekend_dates(year, month, event.week_order)
                 for weekend_date in weekend_dates:
-                    if weekend_date not in events_by_date:
-                        events_by_date[weekend_date] = []
-                    events_by_date[weekend_date].append(event)
+                    store_event(weekend_date, event)
     
     # 计算上月下月的日期
     if month == 1:
@@ -194,6 +268,7 @@ def month_view(request, year=None, month=None):
         'month': month,
         'calendar': cal,
         'events_by_date': events_by_date,
+        'events_by_day': events_by_day,
         'holidays': holidays,
         'lunar_data': lunar_data,
         'month_name': ['一月', '二月', '三月', '四月', '五月', '六月', 
@@ -202,6 +277,7 @@ def month_view(request, year=None, month=None):
         'prev_month': prev_month,
         'next_year': next_year,
         'next_month': next_month,
+        'today': timezone.localdate(),
     }
     
     return render(request, 'family_calendar/month_view.html', context)
@@ -243,3 +319,29 @@ def day_view(request, year, month, day):
     }
     
     return render(request, 'family_calendar/day_view.html', context)
+
+
+def register(request):
+    """用户注册视图，成功后自动登录并跳转到月视图。"""
+    if request.user.is_authenticated:
+        return redirect('family_calendar:month_view')
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        _apply_form_control_styles(form)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('family_calendar:month_view')
+    else:
+        form = UserCreationForm()
+        _apply_form_control_styles(form)
+
+    return render(request, 'registration/register.html', {'form': form})
+
+
+def logout_view(request):
+    """允许 GET/POST 方式退出登录，并跳转到月视图。"""
+    if request.method in ("POST", "GET"):
+        logout(request)
+    return redirect('family_calendar:month_view')

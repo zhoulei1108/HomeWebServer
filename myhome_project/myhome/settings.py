@@ -68,6 +68,10 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            "libraries": {
+                # 显式注册自定义模板标签，确保任意环境都能加载
+                "dict_extras": "apps.family_calendar.templatetags.dict_extras",
+            },
         },
     },
 ]
