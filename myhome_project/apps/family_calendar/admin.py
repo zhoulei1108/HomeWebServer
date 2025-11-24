@@ -1,0 +1,2 @@
+# family_calendar应用不再需要独立的admin配置
+# 事件管理通过events应用的admin进行

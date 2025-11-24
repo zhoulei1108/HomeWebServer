@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 30px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .search-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .form-control { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .btn { display: inline-block; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; border: none; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #545b62; }
+        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #495057; }
+        .table tbody tr:hover { background: #f8f9fa; }
+        .status-active { color: #28a745; font-weight: 500; }
+        .status-inactive { color: #dc3545; font-weight: 500; }
+        .priority { font-weight: 600; }
+        .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 20px; }
+        .pagination a, .pagination span { padding: 8px 12px; border: 1px solid #dee2e6; text-decoration: none; }
+        .pagination a:hover { background: #e9ecef; }
+        .pagination .current { background: #007bff; color: white; border-color: #007bff; }
+        .no-events { text-align: center; color: #6c757d; padding: 40px; font-style: italic; }
+        .filter-section { background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; min-width: 150px; }
+        .filter-group label { font-weight: 500; margin-bottom: 5px; color: #495057; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ title }}</h1>
+        
+        <div class="toolbar">
+            <a href="{% url 'events:create' %}" class="btn btn-primary">创建新事件</a>
+            <a href="{% url 'events:upcoming' %}" class="btn btn-secondary">即将到来的事件</a>
+        </div>
+        
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="{{ filter_form.event_type.id_for_label }}">事件类型</label>
+                        {{ filter_form.event_type }}
+                    </div>
+                    <div class="filter-group">
+                        <label for="{{ filter_form.active.id_for_label }}">状态</label>
+                        {{ filter_form.active }}
+                    </div>
+                    <div class="filter-group">
+                        <label for="{{ filter_form.date_from.id_for_label }}">开始日期</label>
+                        {{ filter_form.date_from }}
+                    </div>
+                    <div class="filter-group">
+                        <label for="{{ filter_form.date_to.id_for_label }}">结束日期</label>
+                        {{ filter_form.date_to }}
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <input type="text" name="search" placeholder="搜索事件名称或描述..." 
+                           value="{{ search_query }}" class="form-control" style="flex: 1;">
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                    <a href="{% url 'events:list' %}" class="btn btn-secondary">清除</a>
+                </div>
+            </form>
+        </div>
+        
+        {% if page_obj.object_list %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><a href="?sort={{ 'name' if sort_by == '-name' else '-name' }}">名称</a></th>
+                        <th><a href="?sort={{ 'event_type' if sort_by == '-event_type' else '-event_type' }}">类型</a></th>
+                        <th><a href="?sort={{ 'date' if sort_by == '-date' else '-date' }}">日期</a></th>
+                        <th>时间</th>
+                        <th><a href="?sort={{ 'priority' if sort_by == '-priority' else '-priority' }}">优先级</a></th>
+                        <th>状态</th>
+                        <th>下次发生</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in page_obj.object_list %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'events:event_detail' event.pk %}">{{ event.name }}</a>
+                        </td>
+                        <td>{{ event.event_type_display_with_icon }}</td>
+                        <td>{{ event.date|default:"-" }}</td>
+                        <td>{{ event.time|default:"-" }}</td>
+                        <td><span class="priority">{{ event.priority }}</span></td>
+                        <td>
+                            {% if event.active %}
+                                <span class="status-active">启用</span>
+                            {% else %}
+                                <span class="status-inactive">禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ event.next_occurrence_display }}</td>
+                        <td>
+                            <a href="{% url 'events:toggle_status' event.pk %}" 
+                               onclick="return confirm('确定要切换事件状态吗？')">
+                                {{ "禁用" if event.active else "启用" }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; 首页</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                {% endif %}
+                
+                <span class="current">
+                    第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">下一页</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">末页 &raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="no-events">
+                {% if search_query or request.GET %}
+                    没有找到符合条件的事件。
+                {% else %}
+                    暂无事件，<a href="{% url 'events:create' %}">创建第一个事件</a>？
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

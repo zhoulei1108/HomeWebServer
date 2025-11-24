@@ -1,0 +1,2 @@
+# family_calendar应用不再需要独立的模型
+# 日历功能将直接使用events应用中的Event模型

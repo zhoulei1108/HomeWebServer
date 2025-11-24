@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 家庭提醒</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 60px;
+        }
+        .header-nav {
+            background: #fff;
+            padding: 10px 20px;
+            border-bottom: 1px solid #dee2e6;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #007bff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .nav-links a:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+            color: #0056b3;
+        }
+        .nav-links a.active {
+            background-color: #e9ecef;
+        }
+        .form-container {
+            max-width: 700px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .form-header h1 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .form-header .lead {
+            color: #6c757d;
+            font-size: 16px;
+        }
+        .btn-primary {
+            background-color: #7b1fa2;
+            border-color: #7b1fa2;
+        }
+        .btn-primary:hover {
+            background-color: #6a1b9a;
+            border-color: #6a1b9a;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .errorlist {
+            color: #dc3545;
+            list-style: none;
+            padding: 0;
+            margin: 5px 0;
+        }
+        .errorlist li {
+            margin-bottom: 2px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .feature-info {
+            background-color: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .feature-info h6 {
+            color: #7b1fa2;
+            margin-bottom: 10px;
+        }
+        .feature-info ul {
+            margin-bottom: 0;
+            font-size: 14px;
+            color: #424242;
+        }
+        .event-type-examples {
+            background-color: #fafafa;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        .text-purple {
+            color: #7b1fa2 !important;
+        }
+        .dynamic-field-group {
+            display: none;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #7b1fa2;
+        }
+        .dynamic-field-group:first-child {
+            display: block;
+        }
+        #dynamic-fields {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="header-nav">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="nav-links">
+                        <a href="{% url 'family_calendar:month_view' %}">
+                            <i class="fas fa-calendar-alt me-1"></i>月视图
+                        </a>
+                        <a href="{% url 'events:list' %}">
+                            <i class="fas fa-list me-1"></i>提醒管理
+                        </a>
+                        <a href="{% url 'events:create' %}" class="active">
+                            <i class="fas fa-bell me-1"></i>新建提醒
+                        </a>
+                        <a href="/admin/">
+                            <i class="fas fa-cog me-1"></i>管理后台
+                        </a>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    {% if user.is_authenticated %}
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user me-1"></i>{{ user.username }}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/admin/auth/user/{{ user.id }}/change/">
+                                        <i class="fas fa-user-edit me-1"></i>个人设置
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/events/">
+                                        <i class="fas fa-bell me-1"></i>我的提醒
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/accounts/logout/">
+                                        <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="/accounts/login/" class="btn btn-sm btn-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>登录
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h1><i class="fas fa-bell text-purple"></i> {{ title }}</h1>
+                <p class="lead">创建提醒事项，支持多种重复模式</p>
+            </div>
+
+            <!-- 功能说明 -->
+            <div class="feature-info">
+                <h6><i class="fas fa-info-circle"></i> 提醒功能说明</h6>
+                <ul>
+                    <li>适用于需要记住的重要事项（生日、纪念日、定期提醒等）</li>
+                    <li>支持年度重复、月度重复等多种模式</li>
+                    <li>会在日历视图中以紫色背景显示</li>
+                    <li>用于记录需要记住的重要日期和事项</li>
+                </ul>
+            </div>
+
+
+        
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- 隐藏原始字段，用于实际提交 -->
+                <div style="display: none;">
+                    {{ form.date }}
+                    {{ form.time }}
+                    {{ form.week_order }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.name.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <div class="help-text">提醒事项的名称，如"张三生日"、"结婚纪念日"、"每月体检提醒"等</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                {{ form.priority.label }}
+                            </label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.priority.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <div class="help-text">设置提醒的重要程度，0为普通，10为最重要</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                        {{ form.description.label }}
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.help_text %}
+                        <div class="help-text">{{ form.description.help_text }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.event_type.id_for_label }}" class="form-label">
+                                {{ form.event_type.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.event_type }}
+                            {% if form.event_type.errors %}
+                                <ul class="errorlist">
+                                    {% for error in form.event_type.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <div class="event-type-examples">
+                                <strong>类型说明：</strong><br>
+                                • 一次性提醒：单次提醒<br>
+                                • 每年重复：生日、纪念日等<br>
+                                • 提醒：可作为一次性或重复提醒<br>
+                                • 每月第N个周末：定期活动
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.active.id_for_label }}" class="form-label">
+                                状态
+                            </label>
+                            <div class="form-check mt-2">
+                                {{ form.active }}
+                                <label class="form-check-label" for="{{ form.active.id_for_label }}">
+                                    {{ form.active.label }}
+                                </label>
+                            </div>
+                            {% if form.active.help_text %}
+                                <div class="help-text">{{ form.active.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 动态字段区域 -->
+                <div id="dynamic-fields">
+                    <!-- 一次性提醒字段 -->
+                    <div id="one-time-fields" class="dynamic-field-group">
+                        <h6 class="mb-3"><i class="fas fa-calendar-day text-purple"></i> 一次性提醒设置</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_date_one_time" class="form-label">
+                                        日期 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" id="id_date_one_time" name="date" class="form-control">
+                                    <div class="help-text">提醒发生的具体日期</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_time_one_time" class="form-label">
+                                        时间
+                                    </label>
+                                    <input type="time" id="id_time_one_time" name="time" class="form-control">
+                                    <div class="help-text">提醒的具体时间（可选）</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 每年重复字段 -->
+                    <div id="annual-fields" class="dynamic-field-group">
+                        <h6 class="mb-3"><i class="fas fa-sync text-purple"></i> 每年重复设置</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_date_annual" class="form-label">
+                                        日期 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" id="id_date_annual" name="date" class="form-control">
+                                    <div class="help-text">设置生日、纪念日等每年的日期</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_time_annual" class="form-label">
+                                        时间
+                                    </label>
+                                    <input type="time" id="id_time_annual" name="time" class="form-control">
+                                    <div class="help-text">提醒的具体时间（可选）</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 提醒字段 -->
+                    <div id="reminder-fields" class="dynamic-field-group">
+                        <h6 class="mb-3"><i class="fas fa-bell text-purple"></i> 提醒设置</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_date_reminder" class="form-label">
+                                        日期 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" id="id_date_reminder" name="date" class="form-control">
+                                    <div class="help-text">提醒发生的日期</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_time_reminder" class="form-label">
+                                        时间
+                                    </label>
+                                    <input type="time" id="id_time_reminder" name="time" class="form-control">
+                                    <div class="help-text">提醒的具体时间（可选）</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 每月第N个周末字段 -->
+                    <div id="monthly-weekend-fields" class="dynamic-field-group">
+                        <h6 class="mb-3"><i class="fas fa-calendar-week text-purple"></i> 每月周末设置</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_week_order_monthly" class="form-label">
+                                        周末顺序 <span class="text-danger">*</span>
+                                    </label>
+                                    <select id="id_week_order_monthly" name="week_order" class="form-control">
+                                        <option value="">选择周末顺序</option>
+                                        <option value="1">第1个周末</option>
+                                        <option value="2">第2个周末</option>
+                                        <option value="3">第3个周末</option>
+                                        <option value="4">第4个周末</option>
+                                    </select>
+                                    <div class="help-text">选择每月第几个周末</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>说明：</strong>每月第N个周末会在每个月的指定周末自动显示，无需设置具体日期。
+                            <br><small>例如：选择"第1个周末"，则每个月的第一个周六和周日都会显示此提醒。</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error">
+                        <ul class="errorlist">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'events:list' %}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times me-1"></i>取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>{{ button_text }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventTypeSelect = document.getElementById('{{ form.event_type.id_for_label }}');
+            const dynamicFields = document.getElementById('dynamic-fields');
+            
+            // 事件类型字段映射
+            const fieldMapping = {
+                'one_time': 'one-time-fields',
+                'annual': 'annual-fields', 
+                'reminder': 'reminder-fields',
+                'monthly_weekend': 'monthly-weekend-fields'
+            };
+            
+            // 同步字段值
+            function syncFieldValues(fromId, toId) {
+                const fromField = document.getElementById(fromId);
+                const toField = document.getElementById(toId);
+                if (fromField && toField) {
+                    toField.value = fromField.value;
+                }
+            }
+            
+            // 显示指定类型的字段
+            function showFieldsForType(eventType) {
+                // 隐藏所有动态字段组
+                const allGroups = dynamicFields.querySelectorAll('.dynamic-field-group');
+                allGroups.forEach(group => {
+                    group.style.display = 'none';
+                });
+                
+                // 显示对应的字段组
+                const targetGroupId = fieldMapping[eventType];
+                if (targetGroupId) {
+                    const targetGroup = document.getElementById(targetGroupId);
+                    if (targetGroup) {
+                        targetGroup.style.display = 'block';
+                    }
+                }
+                
+                // 同步字段值到实际表单字段
+                if (eventType === 'monthly_weekend') {
+                    syncFieldValues('id_week_order_monthly', '{{ form.week_order.id_for_label }}');
+                    // 清空日期时间字段
+                    const dateField = document.getElementById('{{ form.date.id_for_label }}');
+                    const timeField = document.getElementById('{{ form.time.id_for_label }}');
+                    if (dateField) dateField.value = '';
+                    if (timeField) timeField.value = '';
+                } else {
+                    // 同步日期时间字段
+                    syncFieldValues(`id_date_${eventType}`, '{{ form.date.id_for_label }}');
+                    syncFieldValues(`id_time_${eventType}`, '{{ form.time.id_for_label }}');
+                    // 清空周末顺序字段
+                    const weekOrderField = document.getElementById('{{ form.week_order.id_for_label }}');
+                    if (weekOrderField) weekOrderField.value = '';
+                }
+            }
+            
+            // 监听动态字段变化，同步到实际表单字段
+            function setupFieldSync() {
+                // 日期时间字段同步
+                ['one_time', 'annual', 'reminder'].forEach(type => {
+                    const dateField = document.getElementById(`id_date_${type}`);
+                    const timeField = document.getElementById(`id_time_${type}`);
+                    
+                    if (dateField) {
+                        dateField.addEventListener('change', function() {
+                            syncFieldValues(`id_date_${type}`, '{{ form.date.id_for_label }}');
+                        });
+                    }
+                    
+                    if (timeField) {
+                        timeField.addEventListener('change', function() {
+                            syncFieldValues(`id_time_${type}`, '{{ form.time.id_for_label }}');
+                        });
+                    }
+                });
+                
+                // 周末顺序字段同步
+                const weekOrderField = document.getElementById('id_week_order_monthly');
+                if (weekOrderField) {
+                    weekOrderField.addEventListener('change', function() {
+                        syncFieldValues('id_week_order_monthly', '{{ form.week_order.id_for_label }}');
+                    });
+                }
+            }
+            
+            // 初始化显示
+            showFieldsForType(eventTypeSelect.value);
+            setupFieldSync();
+            
+            // 监听事件类型变化
+            eventTypeSelect.addEventListener('change', function() {
+                showFieldsForType(this.value);
+            });
+            
+            // 更新事件类型说明
+            function updateEventTypeDescription(eventType) {
+                const descriptions = {
+                    'one_time': '适用于单次提醒，如会议、预约等',
+                    'annual': '适用于每年重复的日期，如生日、纪念日等',
+                    'reminder': '适用于需要记住的重要事项',
+                    'monthly_weekend': '适用于每月定期活动，如家庭聚会等'
+                };
+                
+                const helpText = document.querySelector('.event-type-examples');
+                if (helpText) {
+                    helpText.innerHTML = `<strong>当前选择：</strong>${descriptions[eventType] || '请选择事件类型'}`;
+                }
+            }
+            
+            // 初始化描述
+            updateEventTypeDescription(eventTypeSelect.value);
+            
+            // 监听变化更新描述
+            eventTypeSelect.addEventListener('change', function() {
+                updateEventTypeDescription(this.value);
+            });
+        });
+    </script>
+</body>
+</html>
