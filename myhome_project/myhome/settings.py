@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.family_calendar",
     "apps.events.apps.EventsConfig",
+    "apps.housework.apps.HouseworkConfig",
 
 ]
 

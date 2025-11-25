@@ -67,7 +67,7 @@
             padding: 8px;
             text-align: center;
             vertical-align: top;
-            height: 120px;
+            height: 140px;
             position: relative;
         }
         .calendar-table th {
@@ -155,7 +155,7 @@
             margin-bottom: 4px;
         }
         .solar-date {
-            font-size: 16px;
+            font-size: 40px;
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 2px;
@@ -197,6 +197,81 @@
         .calendar-table .other-month .date-container {
             opacity: 0.5;
         }
+        .lunar-date {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            display: none;
+        }
+        .lunar-date.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+        }
+        .lunar-date.visible {
+            display: block;
+        }
+        #lunarToggle {
+            transition: all 0.3s ease;
+            min-width: 90px;
+            border-radius: 20px;
+        }
+        #lunarToggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(23,162,184,0.3);
+        }
+        #lunarToggle.active {
+            background-color: #17a2b8;
+            color: white;
+            border-color: #17a2b8;
+            box-shadow: 0 2px 8px rgba(23,162,184,0.4);
+        }
+        #houseworkToggle {
+            transition: all 0.3s ease;
+            min-width: 90px;
+            border-radius: 20px;
+        }
+        #houseworkToggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255,193,7,0.3);
+        }
+        #houseworkToggle.active {
+            background-color: #ffc107;
+            color: #212529;
+            border-color: #ffc107;
+            box-shadow: 0 2px 8px rgba(255,193,7,0.4);
+        }
+        .housework-item {
+            font-size: 12px;
+            padding: 2px 4px;
+            margin: 2px 1px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: inline-block;
+            font-weight: bold;
+            line-height: 1.2;
+            min-height: 18px;
+        }
+        .housework-item .user-abbr {
+            background: rgba(255,255,255,0.3);
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-left: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .housework-container {
+            display: none;
+            margin-top: 3px;
+            max-height: 50px;
+            overflow: hidden;
+        }
+        .housework-container.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +289,12 @@
                         </a>
                         <a href="{% url 'events:create' %}">
                             <i class="fas fa-bell me-1"></i>新建提醒
+                        </a>
+                        <a href="{% url 'housework:list' %}">
+                            <i class="fas fa-broom me-1"></i>家务管理
+                        </a>
+                        <a href="{% url 'housework:create' %}">
+                            <i class="fas fa-plus me-1"></i>新建家务
                         </a>
                         <a href="/admin/">
                             <i class="fas fa-cog me-1"></i>管理后台
@@ -262,18 +343,30 @@
     <div class="calendar-container">
         <div class="calendar-header">
             <h2>{{ month_name }} {{ year }}</h2>
-            <div>
-                <a href="{% url 'family_calendar:month_view_date' prev_year prev_month %}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-chevron-left"></i> 上月
-                </a>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button class="btn btn-outline-info btn-sm" id="lunarToggle" onclick="toggleLunarDisplay()" title="切换农历显示">
+                    <i class="far fa-moon" id="lunarIcon"></i>
+                    <span id="lunarText">显示农历</span>
+                </button>
                 
-                <a href="{% url 'family_calendar:month_view' %}" class="btn btn-outline-primary btn-sm">
-                    今天
-                </a>
+                <button class="btn btn-outline-warning btn-sm" id="houseworkToggle" onclick="toggleHouseworkDisplay()" title="切换家务显示">
+                    <i class="fas fa-broom" id="houseworkIcon"></i>
+                    <span id="houseworkText">显示家务</span>
+                </button>
                 
-                <a href="{% url 'family_calendar:month_view_date' next_year next_month %}" class="btn btn-outline-secondary btn-sm">
-                    下月 <i class="fas fa-chevron-right"></i>
-                </a>
+                <div class="d-flex align-items-center gap-1">
+                    <a href="{% url 'family_calendar:month_view_date' prev_year prev_month %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-chevron-left"></i> 上月
+                    </a>
+                    
+                    <a href="{% url 'family_calendar:month_view' %}" class="btn btn-outline-primary btn-sm">
+                        今天
+                    </a>
+                    
+                    <a href="{% url 'family_calendar:month_view_date' next_year next_month %}" class="btn btn-outline-secondary btn-sm">
+                        下月 <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -328,6 +421,9 @@
                                                 {% endif %}
                                             {% endwith %}
                                         </div>
+                                        <div class="housework-container" id="housework-{{ day }}">
+                                            <!-- 家务数据将通过AJAX动态加载 -->
+                                        </div>
                                     </td>
                                 {% endwith %}
                             {% endif %}
@@ -339,5 +435,155 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 农历显示切换功能
+        let lunarVisible = false; // 默认不显示农历
+        let houseworkVisible = false; // 默认不显示家务
+        let houseworkData = {}; // 存储家务数据
+        
+        // 从localStorage获取上次的状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLunarState = localStorage.getItem('lunarVisible');
+            const savedHouseworkState = localStorage.getItem('houseworkVisible');
+            
+            if (savedLunarState !== null) {
+                lunarVisible = savedLunarState === 'true';
+            } else {
+                lunarVisible = false;
+                localStorage.setItem('lunarVisible', 'false');
+            }
+            
+            if (savedHouseworkState !== null) {
+                houseworkVisible = savedHouseworkState === 'true';
+            } else {
+                houseworkVisible = false;
+                localStorage.setItem('houseworkVisible', 'false');
+            }
+            
+            // 初始化显示状态
+            setTimeout(function() {
+                updateLunarDisplay();
+                updateHouseworkDisplay();
+            }, 100); // 延迟确保DOM完全加载
+        });
+        
+        function toggleLunarDisplay() {
+            lunarVisible = !lunarVisible;
+            updateLunarDisplay();
+            localStorage.setItem('lunarVisible', lunarVisible.toString());
+        }
+        
+        function toggleHouseworkDisplay() {
+            houseworkVisible = !houseworkVisible;
+            updateHouseworkDisplay();
+            localStorage.setItem('houseworkVisible', houseworkVisible.toString());
+        }
+        
+        function updateLunarDisplay() {
+            const lunarDates = document.querySelectorAll('.lunar-date');
+            const lunarToggle = document.getElementById('lunarToggle');
+            const lunarIcon = document.getElementById('lunarIcon');
+            const lunarText = document.getElementById('lunarText');
+            
+            if (lunarVisible) {
+                lunarDates.forEach(lunar => {
+                    lunar.classList.remove('hidden');
+                    lunar.classList.add('visible');
+                });
+                lunarToggle.classList.add('active');
+                lunarIcon.className = 'fas fa-moon';
+                lunarText.textContent = '隐藏农历';
+            } else {
+                lunarDates.forEach(lunar => {
+                    lunar.classList.remove('visible');
+                    lunar.classList.add('hidden');
+                });
+                lunarToggle.classList.remove('active');
+                lunarIcon.className = 'far fa-moon';
+                lunarText.textContent = '显示农历';
+            }
+        }
+        
+        async function updateHouseworkDisplay() {
+            const houseworkContainers = document.querySelectorAll('.housework-container');
+            const houseworkToggle = document.getElementById('houseworkToggle');
+            const houseworkIcon = document.getElementById('houseworkIcon');
+            const houseworkText = document.getElementById('houseworkText');
+            
+            if (houseworkVisible) {
+                // 显示家务
+                if (Object.keys(houseworkData).length === 0) {
+                    // 首次加载，获取数据
+                    await loadHouseworkData();
+                }
+                
+                renderHouseworkData();
+                houseworkContainers.forEach(container => {
+                    container.classList.add('visible');
+                });
+                houseworkToggle.classList.add('active');
+                houseworkIcon.className = 'fas fa-broom';
+                houseworkText.textContent = '隐藏家务';
+            } else {
+                // 隐藏家务
+                houseworkContainers.forEach(container => {
+                    container.classList.remove('visible');
+                });
+                houseworkToggle.classList.remove('active');
+                houseworkIcon.className = 'fas fa-broom';
+                houseworkText.textContent = '显示家务';
+            }
+        }
+        
+        async function loadHouseworkData() {
+            try {
+                // 从URL获取当前年月
+                const currentUrl = new URL(window.location);
+                let year = currentUrl.searchParams.get('year');
+                let month = currentUrl.searchParams.get('month');
+                
+                // 如果URL中没有参数，使用当前年月
+                if (!year || !month) {
+                    const now = new Date();
+                    year = now.getFullYear();
+                    month = now.getMonth() + 1;
+                }
+                
+                const response = await fetch(`/housework/api/month/?year=${year}&month=${month}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    houseworkData = data.houseworks_by_day;
+                }
+            } catch (error) {
+                console.error('加载家务数据失败:', error);
+            }
+        }
+        
+        function renderHouseworkData() {
+            for (const [day, houseworks] of Object.entries(houseworkData)) {
+                const container = document.getElementById(`housework-${day}`);
+                if (container) {
+                    container.innerHTML = '';
+                    
+                    houseworks.forEach(housework => {
+                        const houseworkElement = document.createElement('div');
+                        houseworkElement.className = 'housework-item';
+                        houseworkElement.style.backgroundColor = housework.color;
+                        houseworkElement.style.color = '#fff';
+                        houseworkElement.title = `${housework.title} (${housework.user_abbreviation})`;
+                        
+                        // 格式: [缩写][用户简写] 或 [图标][用户简写]
+                        let displayText = housework.abbreviation;
+                        if (housework.category_icon && housework.category_icon !== '🏠') {
+                            displayText = housework.category_icon;
+                        }
+                        
+                        houseworkElement.innerHTML = `${displayText}<span class="user-abbr">${housework.user_abbreviation}</span>`;
+                        container.appendChild(houseworkElement);
+                    });
+                }
+            }
+        }
+    </script>
 </body>
 </html>

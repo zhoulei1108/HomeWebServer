@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load dict_extras %}
+
+{% block title %}{{ title }} - 家务管理{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-broom me-2"></i>{{ title }}
+                </h2>
+                <a href="{% url 'housework:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>新建家务
+                </a>
+            </div>
+            
+            <!-- 筛选表单 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-2">
+                            {{ filter_form.user }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ filter_form.category }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ filter_form.status }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ filter_form.priority }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ filter_form.date_from }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ filter_form.date_to }}
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>筛选
+                            </button>
+                            <a href="{% url 'housework:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i>重置
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 家务列表 -->
+            <div class="card">
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>标题</th>
+                                        <th>负责人</th>
+                                        <th>分类</th>
+                                        <th>计划日期</th>
+                                        <th>预计耗时</th>
+                                        <th>优先级</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for housework in page_obj %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'housework:detail' housework.pk %}" class="text-decoration-none">
+                                                    {% if housework.category %}
+                                                        {{ housework.category.icon }} 
+                                                    {% endif %}
+                                                    {{ housework.title }}
+                                                </a>
+                                            </td>
+                                            <td>{{ housework.user.username }}</td>
+                                            <td>
+                                                {% if housework.category %}
+                                                    <span class="badge" style="background-color: {{ housework.category.color }}">
+                                                        {{ housework.category.name }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">未分类</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ housework.planned_date }}</td>
+                                            <td>{{ housework.planned_duration }} 分钟</td>
+                                            <td>
+                                                {% if housework.priority == 1 %}
+                                                    <span class="badge bg-success">低</span>
+                                                {% elif housework.priority == 2 %}
+                                                    <span class="badge bg-info">中</span>
+                                                {% elif housework.priority == 3 %}
+                                                    <span class="badge bg-warning text-dark">高</span>
+                                                {% elif housework.priority == 4 %}
+                                                    <span class="badge bg-danger">紧急</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if housework.status == 'pending' %}
+                                                    <span class="badge bg-secondary">待完成</span>
+                                                {% elif housework.status == 'in_progress' %}
+                                                    <span class="badge bg-primary">进行中</span>
+                                                {% elif housework.status == 'completed' %}
+                                                    <span class="badge bg-success">已完成</span>
+                                                {% elif housework.status == 'skipped' %}
+                                                    <span class="badge bg-warning text-dark">已跳过</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'housework:detail' housework.pk %}" class="btn btn-sm btn-outline-primary" title="查看详情">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if housework.status != 'completed' %}
+                                                        <a href="{% url 'housework:edit' housework.pk %}" class="btn btn-sm btn-outline-warning" title="编辑">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="completeHousework({{ housework.pk }})" title="标记完成">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    <a href="{% url 'housework:delete' housework.pk %}" class="btn btn-sm btn-outline-danger" title="删除">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 分页 -->
+                        {% if page_obj.has_other_pages %}
+                            <nav aria-label="家务列表分页">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">首页</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">上一页</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">下一页</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">末页</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-broom fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">暂无家务记录</h5>
+                            <p class="text-muted">
+                                <a href="{% url 'housework:create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>创建第一个家务
+                                </a>
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 完成家务模态框 -->
+<div class="modal fade" id="completeHouseworkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">完成家务</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="completeForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="actual_duration" class="form-label">实际耗时（分钟）</label>
+                        <input type="number" name="actual_duration" id="actual_duration" class="form-control" min="1" max="480" step="5" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>标记完成
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let currentHouseworkId = null;
+
+function completeHousework(houseworkId) {
+    currentHouseworkId = houseworkId;
+    const modal = new bootstrap.Modal(document.getElementById('completeHouseworkModal'));
+    modal.show();
+}
+
+document.getElementById('completeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const actualDuration = document.getElementById('actual_duration').value;
+    
+    if (actualDuration && currentHouseworkId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/housework/${currentHouseworkId}/complete/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        form.innerHTML = `
+            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+            <input type="hidden" name="actual_duration" value="${actualDuration}">
+        `;
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

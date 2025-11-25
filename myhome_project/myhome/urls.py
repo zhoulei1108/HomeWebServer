@@ -42,4 +42,5 @@ urlpatterns = [
     path("accounts/reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
     path("calendar/", include("apps.family_calendar.urls")),
     path("events/", include("apps.events.urls")),
+    path("housework/", include("apps.housework.urls")),
 ]
