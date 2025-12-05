@@ -288,31 +288,68 @@ def get_month_houseworks(request):
     else:
         end_date = date(year, month + 1, 1) - timedelta(days=1)
     
-    houseworks = Housework.objects.filter(
+    # 获取非重复性的家务
+    regular_houseworks = Housework.objects.filter(
         planned_date__gte=start_date,
-        planned_date__lte=end_date
+        planned_date__lte=end_date,
+        frequency__in=['once', 'daily', 'monthly']
     ).select_related('user', 'category')
     
-    # 按日期分组
+    # 获取每周重复的家务模板
+    weekly_houseworks = Housework.objects.filter(
+        frequency='weekly'
+    ).select_related('user', 'category')
+    
+    # 生成该月每天的日期和星期
+    month_days = monthcalendar(year, month)
     houseworks_by_day = {}
-    for housework in houseworks:
-        day = housework.planned_date.day
-        if day not in houseworks_by_day:
-            houseworks_by_day[day] = []
-        houseworks_by_day[day].append({
-            'id': housework.id,
-            'title': housework.title,
-            'abbreviation': housework.abbreviation,
-            'user_abbreviation': housework.user_abbreviation,
-            'color': housework.display_color,
-            'category_icon': housework.category.icon if housework.category else '🏠',
-            'status': housework.status,
-            'priority': housework.priority,
-        })
+    
+    for week in month_days:
+        for day_num in week:
+            if day_num == 0:  # 不属于该月的日期
+                continue
+                
+            current_date = date(year, month, day_num)
+            day_weekday = current_date.weekday()  # 0=周一, 6=周日
+            
+            if day_num not in houseworks_by_day:
+                houseworks_by_day[day_num] = []
+            
+            # 添加当天的常规家务
+            day_houseworks = regular_houseworks.filter(planned_date=current_date)
+            for housework in day_houseworks:
+                houseworks_by_day[day_num].append({
+                    'id': housework.id,
+                    'title': housework.title,
+                    'abbreviation': housework.abbreviation,
+                    'user_abbreviation': housework.user_abbreviation,
+                    'color': housework.display_color,
+                    'category_icon': housework.category.icon if housework.category else '🏠',
+                    'status': housework.status,
+                    'priority': housework.priority,
+                })
+            
+            # 添加当天的每周重复家务
+            for weekly_housework in weekly_houseworks:
+                # 只有当weekdays不为空且包含当天星期时才显示
+                if weekly_housework.weekdays and len(weekly_housework.weekdays) > 0 and day_weekday in weekly_housework.weekdays:
+                    houseworks_by_day[day_num].append({
+                        'id': f"weekly_{weekly_housework.id}_{day_num}",  # 生成唯一ID
+                        'title': weekly_housework.title,
+                        'abbreviation': weekly_housework.abbreviation,
+                        'user_abbreviation': weekly_housework.user_abbreviation,
+                        'color': weekly_housework.display_color,
+                        'category_icon': weekly_housework.category.icon if weekly_housework.category else '🏠',
+                        'status': weekly_housework.status,
+                        'priority': weekly_housework.priority,
+                        'is_weekly': True,  # 标记为每周重复
+                        'original_id': weekly_housework.id,
+                    })
     
     return JsonResponse({
         'houseworks_by_day': houseworks_by_day,
-        'total_count': len(houseworks),
+        'total_count': len(regular_houseworks) + len(weekly_houseworks),
+        'weekly_count': len(weekly_houseworks),
     })
 
 

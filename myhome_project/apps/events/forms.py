@@ -5,6 +5,15 @@ from .models import Event
 class EventForm(forms.ModelForm):
     """事件表单，支持动态字段验证和用户友好的界面"""
     
+    # 添加自定义字段来接收动态表单数据
+    date_one_time = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    date_annual = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    date_reminder = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    time_one_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
+    time_annual = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
+    time_reminder = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
+    week_order_monthly = forms.IntegerField(required=False)
+    
     class Meta:
         model = Event
         fields = [
@@ -55,18 +64,49 @@ class EventForm(forms.ModelForm):
         self.fields['active'].label = "启用"
         self.fields['priority'].label = "优先级"
         
-        # 为必填字段添加required属性
-        required_fields = ['name', 'event_type']
-        for field_name in required_fields:
-            self.fields[field_name].required = True
+        # 显式设置字段required属性
+        self.fields['name'].required = True
+        self.fields['event_type'].required = True
+        self.fields['priority'].required = False  # 有默认值，所以不是必填
+        self.fields['description'].required = False
+        self.fields['date'].required = False
+        self.fields['time'].required = False
+        self.fields['week_order'].required = False
+        self.fields['active'].required = False
 
     def clean(self):
         """表单级别的验证"""
         cleaned = super().clean()
         event_type = cleaned.get("event_type")
-        event_date = cleaned.get("date")
-        week_order = cleaned.get("week_order")
-        event_time = cleaned.get("time")
+        
+        # 根据事件类型从对应的动态字段获取日期和时间
+        event_date = None
+        event_time = None
+        
+        if event_type == Event.TYPE_ONE_TIME:
+            event_date = cleaned.get("date_one_time")
+            event_time = cleaned.get("time_one_time")
+        elif event_type == Event.TYPE_ANNUAL:
+            event_date = cleaned.get("date_annual")
+            event_time = cleaned.get("time_annual")
+        elif event_type == Event.TYPE_REMINDER:
+            event_date = cleaned.get("date_reminder")
+            event_time = cleaned.get("time_reminder")
+        elif event_type == Event.TYPE_MONTHLY_WEEKEND:
+            week_order = cleaned.get("week_order_monthly")
+            if not week_order:
+                self.add_error("week_order_monthly", "每月周末类型事件需要选择周末顺序。")
+            # 设置正确的字段值
+            cleaned['week_order'] = week_order
+            cleaned['date'] = None
+            cleaned['time'] = None
+            return cleaned
+
+        # 设置日期和时间到正确的字段
+        if event_date:
+            cleaned['date'] = event_date
+        if event_time:
+            cleaned['time'] = event_time
 
         # 根据事件类型验证必填字段
         if event_type in [Event.TYPE_ONE_TIME, Event.TYPE_ANNUAL, Event.TYPE_REMINDER]:
@@ -77,16 +117,13 @@ class EventForm(forms.ModelForm):
                 if event_type == Event.TYPE_ONE_TIME and event_date < timezone.now().date():
                     self.add_error("date", "一次性事件的日期不能是过去的日期。")
 
-        if event_type == Event.TYPE_MONTHLY_WEEKEND:
-            if not week_order:
-                self.add_error("week_order", "每月周末类型事件需要选择周末顺序。")
-            # 清除不相关字段的值
-            cleaned['date'] = None
-            cleaned['time'] = None
-
         # 验证时间逻辑
         if event_time and not event_date:
             self.add_error("time", "设置了时间就必须同时设置日期。")
+
+        # 清除周末顺序（如果不是每月周末类型）
+        if event_type != Event.TYPE_MONTHLY_WEEKEND:
+            cleaned['week_order'] = None
 
         return cleaned
 

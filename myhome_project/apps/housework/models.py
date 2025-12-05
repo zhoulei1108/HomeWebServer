@@ -46,6 +46,16 @@ class Housework(models.Model):
         ('monthly', '每月'),
     ]
     
+    WEEKDAY_CHOICES = [
+        (0, '周一'),
+        (1, '周二'),
+        (2, '周三'),
+        (3, '周四'),
+        (4, '周五'),
+        (5, '周六'),
+        (6, '周日'),
+    ]
+    
     # 基本信息
     title = models.CharField("家务标题", max_length=100)
     description = models.TextField("详细描述", blank=True)
@@ -61,6 +71,7 @@ class Housework(models.Model):
     
     # 重复性设置
     frequency = models.CharField("重复频率", max_length=10, choices=FREQUENCY_CHOICES, default='once')
+    weekdays = models.JSONField("重复星期", default=list, blank=True, help_text="每周重复的星期几（JSON格式）")
     
     # 状态和优先级
     status = models.CharField("状态", max_length=20, choices=STATUS_CHOICES, default='pending')

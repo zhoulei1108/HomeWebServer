@@ -112,8 +112,7 @@ class Event(models.Model):
             self.time = None
 
     def save(self, *args, **kwargs):
-        """保存前进行验证"""
-        self.full_clean()
+        """保存模型"""
         super().save(*args, **kwargs)
 
     @property

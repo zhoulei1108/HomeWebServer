@@ -240,9 +240,30 @@
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
+                        {% if message.tags == 'error' %}
+                            <div style="white-space: pre-line;">{{ message }}</div>
+                        {% else %}
+                            {{ message }}
+                        {% endif %}
                     </div>
                 {% endfor %}
+            {% endif %}
+            
+            <!-- 调试信息 -->
+            {% if form.errors %}
+                <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffeaa7;">
+                    <h6><i class="fas fa-bug"></i> 调试信息 - 表单验证错误详情：</h6>
+                    <ul style="margin-bottom: 0;">
+                        {% for field, errors in form.errors.items %}
+                            <li>
+                                <strong>{{ field }}:</strong>
+                                {% for error in errors %}
+                                    {{ error }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
             
             <form method="post">
@@ -352,7 +373,7 @@
                                     <label for="id_date_one_time" class="form-label">
                                         日期 <span class="text-danger">*</span>
                                     </label>
-                                    <input type="date" id="id_date_one_time" name="date" class="form-control">
+                                    <input type="date" id="id_date_one_time" name="date_one_time" class="form-control">
                                     <div class="help-text">提醒发生的具体日期</div>
                                 </div>
                             </div>
@@ -361,7 +382,7 @@
                                     <label for="id_time_one_time" class="form-label">
                                         时间
                                     </label>
-                                    <input type="time" id="id_time_one_time" name="time" class="form-control">
+                                    <input type="time" id="id_time_one_time" name="time_one_time" class="form-control">
                                     <div class="help-text">提醒的具体时间（可选）</div>
                                 </div>
                             </div>
@@ -377,7 +398,7 @@
                                     <label for="id_date_annual" class="form-label">
                                         日期 <span class="text-danger">*</span>
                                     </label>
-                                    <input type="date" id="id_date_annual" name="date" class="form-control">
+                                    <input type="date" id="id_date_annual" name="date_annual" class="form-control">
                                     <div class="help-text">设置生日、纪念日等每年的日期</div>
                                 </div>
                             </div>
@@ -386,7 +407,7 @@
                                     <label for="id_time_annual" class="form-label">
                                         时间
                                     </label>
-                                    <input type="time" id="id_time_annual" name="time" class="form-control">
+                                    <input type="time" id="id_time_annual" name="time_annual" class="form-control">
                                     <div class="help-text">提醒的具体时间（可选）</div>
                                 </div>
                             </div>
@@ -402,7 +423,7 @@
                                     <label for="id_date_reminder" class="form-label">
                                         日期 <span class="text-danger">*</span>
                                     </label>
-                                    <input type="date" id="id_date_reminder" name="date" class="form-control">
+                                    <input type="date" id="id_date_reminder" name="date_reminder" class="form-control">
                                     <div class="help-text">提醒发生的日期</div>
                                 </div>
                             </div>
@@ -411,7 +432,7 @@
                                     <label for="id_time_reminder" class="form-label">
                                         时间
                                     </label>
-                                    <input type="time" id="id_time_reminder" name="time" class="form-control">
+                                    <input type="time" id="id_time_reminder" name="time_reminder" class="form-control">
                                     <div class="help-text">提醒的具体时间（可选）</div>
                                 </div>
                             </div>
@@ -427,7 +448,7 @@
                                     <label for="id_week_order_monthly" class="form-label">
                                         周末顺序 <span class="text-danger">*</span>
                                     </label>
-                                    <select id="id_week_order_monthly" name="week_order" class="form-control">
+                                    <select id="id_week_order_monthly" name="week_order_monthly" class="form-control">
                                         <option value="">选择周末顺序</option>
                                         <option value="1">第1个周末</option>
                                         <option value="2">第2个周末</option>

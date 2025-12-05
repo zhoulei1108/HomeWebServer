@@ -8,12 +8,36 @@ from datetime import date, timedelta
 class HouseworkForm(forms.ModelForm):
     """家务记录表单"""
     
+    # 自定义星期几选择字段
+    weekday_selection = forms.MultipleChoiceField(
+        choices=Housework.WEEKDAY_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        label='重复星期'
+    )
+    
     class Meta:
         model = Housework
         fields = [
             'title', 'description', 'category', 'user', 'planned_date',
             'planned_duration', 'frequency', 'priority', 'status'
         ]
+    
+    def save(self, commit=True):
+        """重写save方法以处理weekdays字段"""
+        instance = super().save(commit=False)
+        
+        # 处理weekdays字段
+        frequency = self.cleaned_data.get('frequency')
+        if frequency == 'weekly':
+            weekdays = self.cleaned_data.get('weekday_selection', [])
+            instance.weekdays = [int(day) for day in weekdays] if weekdays else []
+        else:
+            instance.weekdays = []
+        
+        if commit:
+            instance.save()
+        return instance
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -56,6 +80,11 @@ class HouseworkForm(forms.ModelForm):
         self.fields['frequency'].label = '重复频率'
         self.fields['priority'].label = '优先级'
         self.fields['status'].label = '状态'
+        self.fields['weekday_selection'].label = '重复星期'
+        
+        # 如果是编辑模式，设置星期几的初始值
+        if self.instance.pk and self.instance.weekdays:
+            self.fields['weekday_selection'].initial = self.instance.weekdays
         
         # 过滤用户列表（如果有当前用户，优先显示）
         if user:
@@ -80,11 +109,18 @@ class HouseworkForm(forms.ModelForm):
         """表单整体验证"""
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
+        frequency = cleaned_data.get('frequency')
+        weekdays = cleaned_data.get('weekday_selection')
         actual_duration = getattr(self.instance, 'actual_duration', None)
         
         if status == 'completed' and not actual_duration and not self.instance.pk:
             # 对于新建记录，如果状态是已完成，需要提供实际耗时
             raise forms.ValidationError('已完成的家务必须填写实际耗时')
+        
+        # 验证每周重复的设置
+        if frequency == 'weekly':
+            if not weekdays or len(weekdays) == 0:
+                raise forms.ValidationError('每周重复的家务必须选择至少一个星期几')
         
         return cleaned_data
 

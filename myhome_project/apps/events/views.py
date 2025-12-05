@@ -36,11 +36,45 @@ def create_event(request):
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
-            event = form.save()
-            messages.success(request, f"事件 '{event.name}' 已成功创建！")
-            return redirect("events:event_detail", pk=event.pk)
+            try:
+                # 只传递模型字段需要的参数，过滤掉动态字段
+                model_data = {}
+                model_fields = [f.name for f in Event._meta.get_fields()]
+                
+                for key, value in form.cleaned_data.items():
+                    if key in model_fields:
+                        # 确保有默认值的字段不传递 None
+                        if key == 'priority' and value is None:
+                            model_data[key] = 0  # 使用默认值
+                        elif key == 'active' and value is None:
+                            model_data[key] = True  # 使用默认值
+                        else:
+                            model_data[key] = value
+                
+                # 创建事件实例
+                event = Event(**model_data)
+                event.save()
+                messages.success(request, f"事件 '{event.name}' 已成功创建！")
+                return redirect("events:event_detail", pk=event.pk)
+            except Exception as e:
+                # 捕获模型验证错误
+                error_messages = str(e)
+                messages.error(request, f"保存事件时出错：{error_messages}")
         else:
-            messages.error(request, "请修正表单中的错误后重试。")
+            # 提供详细的错误信息
+            error_details = []
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    error_details.append(f"{field_name}: {error}")
+            
+            # 添加非字段错误
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    error_details.append(f"表单错误: {error}")
+            
+            error_message = "请修正表单中的错误后重试：\n" + "\n".join(error_details)
+            messages.error(request, error_message)
     else:
         # 预填充一些默认值
         initial_data = {}
