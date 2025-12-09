@@ -123,6 +123,40 @@
             color: #6c757d;
             padding: 40px;
         }
+        {# 家务卡片样式 #}
+        .housework-card {
+            border-left: 4px solid #28a745;
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        {# 家务元数据容器样式 #}
+        .housework-meta {
+            margin-bottom: 10px;
+        }
+        {# 频率标签样式 #}
+        .frequency-badge {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        {# 用户徽章样式 #}
+        .user-badge {
+            display: inline-block;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        {# 分类图标样式 #}
+        .category-icon {
+            margin-right: 8px;
+        }
         {# 事件元数据容器样式 #}
         .event-meta {
             margin-bottom: 10px;
@@ -267,6 +301,13 @@
             </a>
         </div>
 
+        {# 事件部分标题 #}
+        {% if events or houseworks %}
+            <h6 class="mb-3 text-muted">
+                <i class="fas fa-calendar me-2"></i>事件安排
+            </h6>
+        {% endif %}
+        
         {# 检查当天是否有事件 #}
         {% if events %}
             {# 遍历显示所有事件 #}
@@ -275,8 +316,8 @@
                     <div class="row">
                         {# 事件信息左侧列 #}
                         <div class="col-md-8">
-                            {# 事件名称 #}
-                            <h5>{{ event.name }}</h5>
+                            {# 事件名称 - 添加链接 #}
+                            <h5><a href="{% url 'events:detail' event.id %}" class="text-decoration-none">{{ event.name }}</a></h5>
                             {# 事件元数据：类型和优先级 #}
                             <div class="event-meta mb-2">
                                 {# 事件类型标签 #}
@@ -311,12 +352,62 @@
                     </div>
                 </div>
             {% endfor %}
-        {% else %}
-            {# 当天没有事件时的提示信息 #}
+        {% endif %}
+        
+        {# 家务部分标题 #}
+        {% if houseworks %}
+            <h6 class="mb-3 text-muted mt-4">
+                <i class="fas fa-broom me-2"></i>家务安排
+            </h6>
+        {% endif %}
+        
+        {# 显示当天的家务 #}
+        {% if houseworks %}
+            {% for housework in houseworks %}
+                <div class="housework-card" style="border-left: 4px solid {{ housework.color }};">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>
+                                <span class="category-icon">{{ housework.category_icon }}</span>
+                                {{ housework.title }}
+                            </h5>
+                            <div class="housework-meta mb-2">
+                                <span class="frequency-badge">
+                                    {% if housework.frequency == 'once' %}一次性
+                                    {% elif housework.frequency == 'daily' %}每日
+                                    {% elif housework.frequency == 'weekly' %}每周
+                                    {% elif housework.frequency == 'monthly' %}每月
+                                    {% else %}{{ housework.frequency }}{% endif %}
+                                </span>
+                                {% if housework.user %}
+                                    <span class="user-badge" style="background-color: {{ housework.color }};">
+                                        {{ housework.user_abbreviation }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="housework-status">
+                                {% if housework.status == 'completed' %}
+                                    <span class="badge bg-success">已完成</span>
+                                {% elif housework.status == 'in_progress' %}
+                                    <span class="badge bg-warning">进行中</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">待处理</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {# 当天没有任何事件和家务时的提示信息 #}
+        {% if not events and not houseworks %}
             <div class="no-events">
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                <h4>当天没有事件</h4>
-                <p class="text-muted">这一天没有安排任何事件</p>
+                <h4>当天没有安排</h4>
+                <p class="text-muted">这一天没有安排任何事件或家务</p>
             </div>
         {% endif %}
     </div>

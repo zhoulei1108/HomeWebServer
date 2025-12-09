@@ -323,9 +323,86 @@ def day_view(request, year, month, day):
                 if target_date in weekend_dates:
                     events_on_date.append(event)
     
+    # 获取当天的家务数据
+    houseworks_on_date = []
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user) if request.user.is_authenticated else None
+    
+    if current_family:
+        from apps.housework.models import Housework
+        
+        # 获取当天的常规家务（一次性、每日、每月）
+        regular_houseworks = Housework.objects.filter(
+            family=current_family,
+            planned_date=target_date,
+            frequency__in=['once', 'daily', 'monthly']
+        ).select_related('user', 'category')
+        
+        for housework in regular_houseworks:
+            houseworks_on_date.append({
+                'id': housework.id,
+                'title': housework.title,
+                'abbreviation': housework.abbreviation,
+                'user_abbreviation': housework.user_abbreviation,
+                'color': housework.display_color,
+                'category_icon': housework.category.icon if housework.category else '🏠',
+                'status': housework.status,
+                'priority': housework.priority,
+                'type': 'housework',
+                'frequency': housework.frequency,
+                'user': housework.user,
+                'category': housework.category,
+            })
+        
+        # 获取每周重复的家务
+        weekly_houseworks = Housework.objects.filter(
+            family=current_family,
+            frequency='weekly'
+        ).select_related('user', 'category')
+        
+        day_weekday = target_date.weekday()  # 0=周一, 6=周日
+        for weekly_housework in weekly_houseworks:
+            # 检查weekdays是否为空或格式不正确
+            if not weekly_housework.weekdays:
+                continue
+                
+            # 确保weekdays是整数列表，并且处理可能的字符串格式
+            weekdays_list = weekly_housework.weekdays
+            if isinstance(weekdays_list, str):
+                # 如果是字符串，尝试解析
+                try:
+                    weekdays_list = eval(weekdays_list) if weekdays_list.startswith('[') else [int(weekdays_list)]
+                except:
+                    weekdays_list = []
+            elif not isinstance(weekdays_list, list):
+                weekdays_list = []
+            
+            # 检查是否在指定的星期几
+            # 注意：家务模型中的weekdays使用0=周一,1=周二,...,6=周日的格式
+            if day_weekday in weekdays_list:
+                houseworks_on_date.append({
+                    'id': weekly_housework.id,
+                    'title': weekly_housework.title,
+                    'abbreviation': weekly_housework.abbreviation,
+                    'user_abbreviation': weekly_housework.user_abbreviation,
+                    'color': weekly_housework.display_color,
+                    'category_icon': weekly_housework.category.icon if weekly_housework.category else '🏠',
+                    'status': weekly_housework.status,
+                    'priority': weekly_housework.priority,
+                    'type': 'housework',
+                    'frequency': weekly_housework.frequency,
+                    'user': weekly_housework.user,
+                    'category': weekly_housework.category,
+                })
+    
     context = {
         'date': target_date,
+        'year': year,
+        'month': month,
+        'day': day,
         'events': events_on_date,
+        'houseworks': houseworks_on_date,
+        'current_family': current_family,
     }
     
     return render(request, 'family_calendar/day_view.html', context)

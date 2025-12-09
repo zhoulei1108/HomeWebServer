@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, Family
 
 
 class UserProfileForm(forms.ModelForm):
@@ -111,3 +111,59 @@ class ProfileSettingsForm(forms.ModelForm):
             field.widget.attrs['class'] = 'form-check-input'
             if hasattr(field.widget, 'type') and field.widget.type == 'checkbox':
                 field.widget.attrs['class'] = 'form-check-input'
+
+
+class FamilyCreateForm(forms.ModelForm):
+    """创建家庭表单"""
+    
+    class Meta:
+        model = Family
+        fields = ['name', 'description', 'max_members', 'avatar', 'color_theme', 'is_public']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'placeholder': '给您的家庭起个名字吧',
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': '描述一下您的家庭特色...',
+                'class': 'form-control'
+            }),
+            'max_members': forms.NumberInput(attrs={
+                'min': 2,
+                'max': 50,
+                'class': 'form-control'
+            }),
+            'avatar': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'color_theme': forms.TextInput(attrs={
+                'type': 'color',
+                'class': 'form-control form-control-color'
+            }),
+            'is_public': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+        labels = {
+            'name': '家庭名称',
+            'description': '家庭描述',
+            'max_members': '最大成员数',
+            'avatar': '家庭头像',
+            'color_theme': '主题色',
+            'is_public': '公开家庭组',
+        }
+        help_texts = {
+            'description': '描述一下您的家庭特色',
+            'max_members': '家庭组最大成员数量',
+            'color_theme': '十六进制颜色代码',
+            'is_public': '是否允许搜索到本家庭组',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 设置默认值
+        self.fields['max_members'].initial = 10
+        self.fields['color_theme'].initial = '#a8edea'
+        self.fields['is_public'].initial = False

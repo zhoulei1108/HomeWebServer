@@ -1055,6 +1055,9 @@
                 localStorage.setItem('houseworkVisible', 'false');
             }
             
+            // 清空家务数据缓存，确保获取最新月份的数据
+            houseworkData = {};
+            
             // 初始化显示状态
             setTimeout(function() {
                 updateLunarDisplay();
@@ -1109,11 +1112,8 @@
             const houseworkText = document.getElementById('houseworkText');
             
             if (houseworkVisible) {
-                // 显示家务
-                if (Object.keys(houseworkData).length === 0) {
-                    // 首次加载，获取数据
-                    await loadHouseworkData();
-                }
+                // 显示家务 - 每次都重新加载数据以获取当前月份的数据
+                await loadHouseworkData();
                 
                 renderHouseworkData();
                 houseworkContainers.forEach(container => {

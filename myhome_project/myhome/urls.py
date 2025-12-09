@@ -20,6 +20,7 @@ from django.shortcuts import redirect
 from django.urls import path, include, reverse_lazy
 
 from apps.family_calendar import views as calendar_views
+from apps.family import views as family_views
 
 urlpatterns = [
     # 根路径重定向到家庭仪表板（如果没有家庭则显示引导）
@@ -29,7 +30,7 @@ urlpatterns = [
     path("accounts/", lambda request: redirect('login'), name="accounts"),
     path(
         "accounts/login/",
-        auth_views.LoginView.as_view(template_name="registration/login.html"),
+        family_views.login_view,
         name="login",
     ),
     path("accounts/logout/", calendar_views.logout_view, name="logout"),

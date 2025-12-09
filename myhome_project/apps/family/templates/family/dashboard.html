@@ -27,17 +27,14 @@
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'family:detail' current_family.id %}">
-                                        <i class="fas fa-info-circle me-2"></i>家庭详情
+                                    <li><a class="dropdown-item" href="{% url 'family:dashboard' %}">
+                                        <i class="fas fa-info-circle me-2"></i>家庭主页
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'family:update' current_family.id %}">
-                                        <i class="fas fa-cog me-2"></i>设置家庭
+                                    <li><a class="dropdown-item" href="{% url 'family:profile_settings' %}">
+                                        <i class="fas fa-cog me-2"></i>个人设置
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'family:invite' current_family.id %}">
-                                        <i class="fas fa-user-plus me-2"></i>邀请成员
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{% url 'family:manage_members' current_family.id %}">
-                                        <i class="fas fa-users me-2"></i>管理成员
+                                    <li><a class="dropdown-item" href="{% url 'family:search' %}">
+                                        <i class="fas fa-user-plus me-2"></i>搜索家庭
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{% url 'family:profile' %}">
@@ -99,8 +96,8 @@
                             </button>
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'family:manage_members' current_family.id %}" class="btn btn-family w-100">
-                                <i class="fas fa-users me-2"></i>管理成员
+                            <a href="{% url 'family:dashboard' %}" class="btn btn-family w-100">
+                                <i class="fas fa-users me-2"></i>家庭成员
                             </a>
                         </div>
                         <div class="col-md-3">
@@ -165,7 +162,7 @@
                             <div class="stats-card">
                                 <i class="fas fa-chart-pie fa-2x mb-2" style="color: #fcb69f;"></i>
                                 <div class="stats-number">
-                                    <a href="{% url 'family:detail' current_family.id %}" style="text-decoration: none; color: inherit;">
+                                    <a href="{% url 'family:dashboard' %}" style="text-decoration: none; color: inherit;">
                                         查看统计
                                     </a>
                                 </div>
@@ -176,7 +173,7 @@
                             <div class="stats-card">
                                 <i class="fas fa-cog fa-2x mb-2" style="color: #f8b500;"></i>
                                 <div class="stats-number">
-                                    <a href="{% url 'family:manage_members' current_family.id %}" style="text-decoration: none; color: inherit;">
+                                    <a href="{% url 'family:profile_settings' %}" style="text-decoration: none; color: inherit;">
                                         权限管理
                                     </a>
                                 </div>
@@ -187,7 +184,7 @@
                             <div class="stats-card">
                                 <i class="fas fa-history fa-2x mb-2" style="color: #9c27b0;"></i>
                                 <div class="stats-number">
-                                    <a href="{% url 'family:detail' current_family.id %}" style="text-decoration: none; color: inherit;">
+                                    <a href="{% url 'family:dashboard' %}" style="text-decoration: none; color: inherit;">
                                         活动日志
                                     </a>
                                 </div>
@@ -207,13 +204,13 @@
                 <div class="p-4">
                     <h5 style="color: #8b6f47; margin-bottom: 20px;">
                         <i class="fas fa-users me-2"></i>家庭成员
-                        <a href="{% url 'family:manage_members' current_family.id %}" class="btn btn-sm btn-family float-end">
+                        <a href="{% url 'family:profile' %}" class="btn btn-sm btn-family float-end">
                             <i class="fas fa-cog"></i>
                         </a>
                     </h5>
                     
                     <div class="row">
-                        {% for member in recent_members %}
+                        {% for member in members %}
                             <div class="col-12 mb-3">
                                 <div class="member-card member-profile-trigger" data-bs-toggle="modal" data-bs-target="#memberProfileModal{{ member.id }}" style="cursor: pointer;">
                                     <div class="row align-items-center">
@@ -323,7 +320,7 @@
                         
                         {% if member_count > 5 %}
                             <div class="col-12">
-                                <a href="{% url 'family:detail' current_family.id %}" class="btn btn-family w-100">
+                                <a href="{% url 'family:profile' %}" class="btn btn-family w-100">
                                     查看全部 {{ member_count }} 位成员
                                 </a>
                             </div>
@@ -425,13 +422,14 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'family:invite' current_family.id %}">
+            <form method="post" action="{% url 'family:send_invitation' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="invitee_username" class="form-label">用户名</label>
-                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" required>
-                        <div class="form-text">请输入要邀请的用户用户名</div>
+                        <label for="invitee_username" class="form-label">用户名或邮箱</label>
+                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" 
+                               placeholder="输入用户名或邮箱地址" required>
+                        <div class="form-text">可以输入用户名或邮箱地址来查找用户</div>
                     </div>
                     <div class="mb-3">
                         <label for="message" class="form-label">邀请消息</label>
@@ -459,7 +457,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'family:update' current_family.id %}" enctype="multipart/form-data">
+            <form method="post" action="{% url 'family:profile_settings' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="row">

@@ -20,7 +20,7 @@
                             <p class="mb-0" style="opacity: 0.9;">共 {{ members.count }} 位成员</p>
                         </div>
                         <div class="col-md-4 text-end">
-                            <a href="{% url 'family:detail' family.id %}" class="btn btn-light me-2">
+                            <a href="{% url 'family:dashboard' %}" class="btn btn-light me-2">
                                 <i class="fas fa-arrow-left me-2"></i>返回家庭详情
                             </a>
                             {% if user_member.has_permission('invite_members') %}
@@ -193,7 +193,7 @@
                                             </h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
-                                        <form method="post" action="{% url 'family:update_member' family.id member.id %}">
+                                        <form method="post" action="{% url 'family:profile_settings' %}">
                                             {% csrf_token %}
                                             <div class="modal-body">
                                                 <div class="mb-3">
@@ -265,13 +265,14 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'family:invite' family.id %}">
+            <form method="post" action="{% url 'family:send_invitation' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="invitee_username" class="form-label">用户名</label>
-                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" required>
-                        <div class="form-text">请输入要邀请的用户用户名</div>
+                        <label for="invitee_username" class="form-label">用户名或邮箱</label>
+                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" 
+                               placeholder="输入用户名或邮箱地址" required>
+                        <div class="form-text">可以输入用户名或邮箱地址来查找用户</div>
                     </div>
                     <div class="mb-3">
                         <label for="message" class="form-label">邀请消息</label>

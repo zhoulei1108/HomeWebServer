@@ -43,7 +43,7 @@ class HouseworkForm(forms.ModelForm):
         model = Housework
         fields = [
             'title', 'description', 'category', 'user', 'planned_date',
-            'planned_duration', 'frequency', 'priority', 'status'
+            'planned_duration', 'frequency', 'weekday_selection', 'priority', 'status'
         ]
         widgets = {
             'title': forms.TextInput(attrs={

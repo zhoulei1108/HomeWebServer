@@ -405,20 +405,24 @@ def get_month_houseworks(request):
             
             # 添加当天的每周重复家务
             for weekly_housework in weekly_houseworks:
-                # 只有当weekdays不为空且包含当天星期时才显示
+            # 只有当weekdays不为空且包含当天星期时才显示
+            # 注意：HTML表格中第0列是周日，但Python weekday中0是周一，6是周日
+            # 需要将Python的weekday映射到HTML表格的列索引
+                html_weekday = (day_weekday + 1) % 7  # 将周一(0)映射到列1，周日(6)映射到列0
+                
                 if weekly_housework.weekdays and len(weekly_housework.weekdays) > 0 and day_weekday in weekly_housework.weekdays:
-                    houseworks_by_day[day_num].append({
-                        'id': f"weekly_{weekly_housework.id}_{day_num}",  # 生成唯一ID
-                        'title': weekly_housework.title,
-                        'abbreviation': weekly_housework.abbreviation,
-                        'user_abbreviation': weekly_housework.user_abbreviation,
-                        'color': weekly_housework.display_color,
-                        'category_icon': weekly_housework.category.icon if weekly_housework.category else '🏠',
-                        'status': weekly_housework.status,
-                        'priority': weekly_housework.priority,
-                        'is_weekly': True,  # 标记为每周重复
-                        'original_id': weekly_housework.id,
-                    })
+                        houseworks_by_day[day_num].append({
+                            'id': f"weekly_{weekly_housework.id}_{day_num}",  # 生成唯一ID
+                            'title': weekly_housework.title,
+                            'abbreviation': weekly_housework.abbreviation,
+                            'user_abbreviation': weekly_housework.user_abbreviation,
+                            'color': weekly_housework.display_color,
+                            'category_icon': weekly_housework.category.icon if weekly_housework.category else '🏠',
+                            'status': weekly_housework.status,
+                            'priority': weekly_housework.priority,
+                            'is_weekly': True,  # 标记为每周重复
+                            'original_id': weekly_housework.id,
+                        })
     
     return JsonResponse({
         'houseworks_by_day': houseworks_by_day,
