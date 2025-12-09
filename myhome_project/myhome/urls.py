@@ -22,8 +22,8 @@ from django.urls import path, include, reverse_lazy
 from apps.family_calendar import views as calendar_views
 
 urlpatterns = [
-    # 根路径重定向到日历页面
-    path("", lambda request: redirect('family_calendar:month_view'), name="home"),
+    # 根路径重定向到家庭仪表板（如果没有家庭则显示引导）
+    path("", lambda request: redirect('family:dashboard'), name="home"),
     path("admin/", admin.site.urls),
     # 手动配置认证URL
     path("accounts/", lambda request: redirect('login'), name="accounts"),
@@ -40,6 +40,7 @@ urlpatterns = [
     path("accounts/password_reset/done/", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),
     path("accounts/reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("accounts/reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path("family/", include("apps.family.urls")),
     path("calendar/", include("apps.family_calendar.urls")),
     path("events/", include("apps.events.urls")),
     path("housework/", include("apps.housework.urls")),

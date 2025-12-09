@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
 import random
+from apps.family.models import Family
 
 
 class HouseworkCategory(models.Model):
@@ -60,6 +61,17 @@ class Housework(models.Model):
     title = models.CharField("家务标题", max_length=100)
     description = models.TextField("详细描述", blank=True)
     category = models.ForeignKey(HouseworkCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="分类")
+    
+    # 关联家庭组
+    family = models.ForeignKey(
+        Family, 
+        on_delete=models.CASCADE, 
+        related_name='houseworks', 
+        verbose_name="家庭",
+        null=True,
+        blank=True,
+        help_text="选择关联的家庭组"
+    )
     
     # 关联用户
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="负责人")

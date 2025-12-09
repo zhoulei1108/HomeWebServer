@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
+from apps.family.models import Family
 
 class EventManager(models.Manager):
     """自定义管理器，提供常用查询方法"""
@@ -40,6 +41,17 @@ class Event(models.Model):
         (4, "第4个周末"),
     ]
 
+    # 关联家庭组
+    family = models.ForeignKey(
+        Family, 
+        on_delete=models.CASCADE, 
+        related_name='events', 
+        verbose_name="家庭",
+        null=True,
+        blank=True,
+        help_text="选择关联的家庭组，留空则仅个人可见"
+    )
+    
     name = models.CharField("事件名称", max_length=200)
     description = models.TextField("描述", blank=True, help_text="可选的详细描述")
     event_type = models.CharField(

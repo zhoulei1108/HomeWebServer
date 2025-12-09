@@ -33,10 +33,21 @@ def safe_render(request, template_name, context=None):
 @login_required
 def create_housework(request):
     """新建家务"""
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
+    if not current_family:
+        messages.error(request, '您还没有加入任何家庭，无法创建家务')
+        return redirect('family:create')
+    
     if request.method == 'POST':
-        form = HouseworkForm(request.POST, current_user=request.user)
+        form = HouseworkForm(request.POST, current_user=request.user, current_family=current_family)
         if form.is_valid():
+            # 自动关联创建者
             housework = form.save()
+            # creator在表单的save方法中已经设置
+            
             messages.success(request, f"家务 '{housework.title}' 已成功创建！")
             return redirect('housework:list')
         else:
@@ -55,7 +66,7 @@ def create_housework(request):
                 'frequency': template.frequency,
             }
         
-        form = HouseworkForm(current_user=request.user, initial=initial_data)
+        form = HouseworkForm(current_user=request.user, current_family=current_family, initial=initial_data)
     
     return safe_render(request, 'housework/create_housework.html', {
         'form': form,
@@ -67,7 +78,19 @@ def create_housework(request):
 @login_required
 def edit_housework(request, pk):
     """编辑家务"""
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     housework = get_object_or_404(Housework, pk=pk)
+    
+    # 检查权限：用户只能编辑自己家庭的家务
+    if current_family and housework.family != current_family:
+        messages.error(request, '您没有权限编辑该家务')
+        return redirect('housework:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
     
     if request.method == 'POST':
         form = HouseworkForm(request.POST, instance=housework, current_user=request.user)
@@ -90,7 +113,19 @@ def edit_housework(request, pk):
 @login_required
 def housework_detail(request, pk):
     """家务详情"""
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     housework = get_object_or_404(Housework, pk=pk)
+    
+    # 检查权限：用户只能查看自己家庭的家务
+    if current_family and housework.family != current_family:
+        messages.error(request, '您没有权限查看该家务')
+        return redirect('housework:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
     
     return safe_render(request, 'housework/housework_detail.html', {
         'housework': housework,
@@ -101,8 +136,14 @@ def housework_detail(request, pk):
 @login_required
 def housework_list(request):
     """家务列表"""
-    form = HouseworkFilterForm(request.GET)
-    houseworks = Housework.objects.all()
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
+    form = HouseworkFilterForm(request.GET, current_family=current_family)
+    
+    # 只显示当前家庭的家务
+    houseworks = Housework.objects.filter(family=current_family) if current_family else Housework.objects.none()
     
     # 应用筛选
     if form.is_valid():
@@ -146,7 +187,19 @@ def housework_list(request):
 @require_POST
 def complete_housework(request, pk):
     """完成家务"""
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     housework = get_object_or_404(Housework, pk=pk)
+    
+    # 检查权限：用户只能操作自己家庭的家务
+    if current_family and housework.family != current_family:
+        messages.error(request, '您没有权限操作该家务')
+        return redirect('housework:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
     
     if request.method == 'POST':
         form = HouseworkCompleteForm(request.POST, instance=housework)
@@ -164,7 +217,19 @@ def complete_housework(request, pk):
 @require_POST
 def delete_housework(request, pk):
     """删除家务"""
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     housework = get_object_or_404(Housework, pk=pk)
+    
+    # 检查权限：用户只能删除自己家庭的家务
+    if current_family and housework.family != current_family:
+        messages.error(request, '您没有权限删除该家务')
+        return redirect('housework:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
     
     if request.method == 'POST':
         housework_name = housework.title
@@ -281,6 +346,13 @@ def get_month_houseworks(request):
     except ValueError:
         return JsonResponse({'error': '无效的年月参数'}, status=400)
     
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user) if request.user.is_authenticated else None
+    
+    if not current_family:
+        return JsonResponse({'error': '您还没有加入任何家庭'}, status=403)
+    
     # 获取该月的家务数据
     start_date = date(year, month, 1)
     if month == 12:
@@ -288,15 +360,17 @@ def get_month_houseworks(request):
     else:
         end_date = date(year, month + 1, 1) - timedelta(days=1)
     
-    # 获取非重复性的家务
+    # 获取非重复性的家务 - 限制为当前家庭
     regular_houseworks = Housework.objects.filter(
+        family=current_family,
         planned_date__gte=start_date,
         planned_date__lte=end_date,
         frequency__in=['once', 'daily', 'monthly']
     ).select_related('user', 'category')
     
-    # 获取每周重复的家务模板
+    # 获取每周重复的家务模板 - 限制为当前家庭
     weekly_houseworks = Housework.objects.filter(
+        family=current_family,
         frequency='weekly'
     ).select_related('user', 'category')
     

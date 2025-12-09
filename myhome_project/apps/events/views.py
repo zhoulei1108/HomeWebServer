@@ -33,29 +33,26 @@ def create_event(request):
     GET: 显示创建表单
     POST: 处理表单提交
     """
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     if request.method == "POST":
-        form = EventForm(request.POST)
+        form = EventForm(request.POST, current_family=current_family)
         if form.is_valid():
             try:
-                # 只传递模型字段需要的参数，过滤掉动态字段
-                model_data = {}
-                model_fields = [f.name for f in Event._meta.get_fields()]
+                # 检查用户是否有家庭
+                if not current_family:
+                    messages.error(request, '您还没有加入任何家庭，无法创建事件')
+                    return redirect('family:create')
                 
-                for key, value in form.cleaned_data.items():
-                    if key in model_fields:
-                        # 确保有默认值的字段不传递 None
-                        if key == 'priority' and value is None:
-                            model_data[key] = 0  # 使用默认值
-                        elif key == 'active' and value is None:
-                            model_data[key] = True  # 使用默认值
-                        else:
-                            model_data[key] = value
+                # 自动关联创建者
+                instance = form.save(commit=False)
+                instance.creator = request.user
+                instance.save()
                 
-                # 创建事件实例
-                event = Event(**model_data)
-                event.save()
-                messages.success(request, f"事件 '{event.name}' 已成功创建！")
-                return redirect("events:event_detail", pk=event.pk)
+                messages.success(request, f"事件 '{instance.name}' 已成功创建！")
+                return redirect("events:event_detail", pk=instance.pk)
             except Exception as e:
                 # 捕获模型验证错误
                 error_messages = str(e)
@@ -92,7 +89,20 @@ def event_detail(request, pk):
     """
     显示事件详情
     """
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     event = get_object_or_404(Event, pk=pk)
+    
+    # 检查权限：用户只能查看自己家庭的事件
+    if current_family and event.family != current_family:
+        messages.error(request, '您没有权限查看该事件')
+        return redirect('events:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
+    
     next_occurrence = event.next_occurrence()
     
     context = {
@@ -109,9 +119,18 @@ def event_list(request):
     事件列表视图，支持筛选和分页
     """
     try:
+        # 获取当前用户的家庭
+        from apps.family.models import get_current_family
+        current_family = get_current_family(request.user)
+        
         # 获取筛选参数
         filter_form = EventFilterForm(request.GET)
-        events = Event.objects.all()
+        
+        # 只显示当前家庭的事件
+        events = Event.objects.filter(family=current_family) if current_family else Event.objects.none()
+        
+        # 先过滤掉数据有问题的记录
+        events = events.exclude(active__isnull=True)
         
         # 先过滤掉数据有问题的记录
         events = events.exclude(active__isnull=True)
@@ -189,7 +208,20 @@ def toggle_event_status(request, pk):
     """
     切换事件启用/禁用状态
     """
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     event = get_object_or_404(Event, pk=pk)
+    
+    # 检查权限：用户只能操作自己家庭的事件
+    if current_family and event.family != current_family:
+        messages.error(request, '您没有权限操作该事件')
+        return redirect('events:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
+    
     event.active = not event.active
     event.save()
     
@@ -207,15 +239,28 @@ def toggle_event_status(request, pk):
     
     return redirect(request.META.get('HTTP_REFERER', 'events:event_list'))
 
+@login_required
 def upcoming_events(request):
     """
     显示即将到来的事件
     """
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     days = int(request.GET.get('days', 30))  # 默认显示未来30天
     if days < 1 or days > 365:
         days = 30
     
-    events = Event.objects.upcoming(days)
+    # 只显示当前家庭的即将到来的事件
+    if current_family:
+        events = Event.objects.filter(family=current_family).active()
+        # 手动过滤即将到来的事件，因为自定义管理器可能不支持链式过滤
+        from django.utils import timezone
+        cutoff_date = timezone.now() + timezone.timedelta(days=days)
+        events = events.filter(date__lte=cutoff_date).order_by('date')
+    else:
+        events = Event.objects.none()
     
     context = {
         "events": events,
@@ -230,7 +275,19 @@ def delete_event(request, pk):
     """
     删除事件
     """
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user)
+    
     event = get_object_or_404(Event, pk=pk)
+    
+    # 检查权限：用户只能删除自己家庭的事件
+    if current_family and event.family != current_family:
+        messages.error(request, '您没有权限删除该事件')
+        return redirect('events:list')
+    elif not current_family:
+        messages.error(request, '您还没有加入任何家庭')
+        return redirect('family:create')
     
     if request.method == "POST":
         event_name = event.name

@@ -16,28 +16,35 @@ class HouseworkForm(forms.ModelForm):
         label='重复星期'
     )
     
+    def __init__(self, *args, **kwargs):
+        self.current_user = kwargs.pop('current_user', None)
+        self.current_family = kwargs.pop('current_family', None)
+        super().__init__(*args, **kwargs)
+        
+        # 设置字段标签
+        self.fields['title'].label = '家务标题'
+        self.fields['description'].label = '详细描述'
+        self.fields['category'].label = '分类'
+        self.fields['user'].label = '负责人'
+        self.fields['planned_date'].label = '计划执行日期'
+        self.fields['planned_duration'].label = '预计耗时(分钟)'
+        self.fields['frequency'].label = '重复频率'
+        self.fields['priority'].label = '优先级'
+        self.fields['status'].label = '状态'
+        self.fields['weekday_selection'].label = '重复星期'
+        
+        # 限制用户选择为当前家庭的成员
+        if self.current_family:
+            self.fields['user'].queryset = User.objects.filter(
+                id__in=self.current_family.get_active_members().values_list('user', flat=True)
+            )
+    
     class Meta:
         model = Housework
         fields = [
             'title', 'description', 'category', 'user', 'planned_date',
             'planned_duration', 'frequency', 'priority', 'status'
         ]
-    
-    def save(self, commit=True):
-        """重写save方法以处理weekdays字段"""
-        instance = super().save(commit=False)
-        
-        # 处理weekdays字段
-        frequency = self.cleaned_data.get('frequency')
-        if frequency == 'weekly':
-            weekdays = self.cleaned_data.get('weekday_selection', [])
-            instance.weekdays = [int(day) for day in weekdays] if weekdays else []
-        else:
-            instance.weekdays = []
-        
-        if commit:
-            instance.save()
-        return instance
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -66,21 +73,25 @@ class HouseworkForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
     
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('current_user', None)
-        super().__init__(*args, **kwargs)
+    def save(self, commit=True):
+        """重写save方法以处理weekdays字段"""
+        instance = super().save(commit=False)
         
-        # 设置字段标签
-        self.fields['title'].label = '家务标题'
-        self.fields['description'].label = '详细描述'
-        self.fields['category'].label = '分类'
-        self.fields['user'].label = '负责人'
-        self.fields['planned_date'].label = '计划执行日期'
-        self.fields['planned_duration'].label = '预计耗时(分钟)'
-        self.fields['frequency'].label = '重复频率'
-        self.fields['priority'].label = '优先级'
-        self.fields['status'].label = '状态'
-        self.fields['weekday_selection'].label = '重复星期'
+        # 自动关联家庭
+        if self.current_family:
+            instance.family = self.current_family
+        
+        # 处理weekdays字段
+        frequency = self.cleaned_data.get('frequency')
+        if frequency == 'weekly':
+            weekdays = self.cleaned_data.get('weekday_selection', [])
+            instance.weekdays = [int(day) for day in weekdays] if weekdays else []
+        else:
+            instance.weekdays = []
+        
+        if commit:
+            instance.save()
+        return instance
         
         # 如果是编辑模式，设置星期几的初始值
         if self.instance.pk and self.instance.weekdays:
@@ -240,7 +251,14 @@ class HouseworkFilterForm(forms.Form):
     )
     
     def __init__(self, *args, **kwargs):
+        self.current_family = kwargs.pop('current_family', None)
         super().__init__(*args, **kwargs)
+        
+        # 限制用户选择为当前家庭的成员
+        if self.current_family:
+            self.fields['user'].queryset = User.objects.filter(
+                id__in=self.current_family.get_active_members().values_list('user', flat=True)
+            )
         
         # 设置默认日期范围（当前月份）
         if not args and not kwargs.get('data'):

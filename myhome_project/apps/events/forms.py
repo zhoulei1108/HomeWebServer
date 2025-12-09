@@ -5,53 +5,31 @@ from .models import Event
 class EventForm(forms.ModelForm):
     """事件表单，支持动态字段验证和用户友好的界面"""
     
-    # 添加自定义字段来接收动态表单数据
-    date_one_time = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
-    date_annual = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
-    date_reminder = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
-    time_one_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
-    time_annual = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
-    time_reminder = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time"}))
-    week_order_monthly = forms.IntegerField(required=False)
-    
     class Meta:
         model = Event
-        fields = [
-            "name", "description", "event_type", 
-            "date", "time", "week_order", 
-            "active", "priority"
-        ]
+        fields = ['name', 'description', 'event_type', 'date', 'time', 'week_order', 'active', 'priority']
         widgets = {
-            "name": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "输入事件名称",
-                "autofocus": True
-            }),
-            "description": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "可选的详细描述"
-            }),
-            "event_type": forms.Select(attrs={"class": "form-control"}),
-            "date": forms.DateInput(attrs={
-                "type": "date",
-                "class": "form-control"
-            }),
-            "time": forms.TimeInput(attrs={
-                "type": "time",
-                "class": "form-control"
-            }),
-            "week_order": forms.Select(attrs={"class": "form-control"}),
-            "active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "priority": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": 0,
-                "max": 10,
-                "placeholder": "0-10，数值越大优先级越高"
-            }),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'event_type': forms.Select(attrs={'class': 'form-control'}),
+            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'week_order': forms.Select(attrs={'class': 'form-control'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'priority': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 10}),
         }
-
+    
+    # 添加自定义字段来接收动态表单数据
+    date_one_time = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    date_annual = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    date_reminder = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    time_one_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    time_annual = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    time_reminder = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"type": "time", "class": "form-control"}))
+    week_order_monthly = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 4}))
+    
     def __init__(self, *args, **kwargs):
+        self.current_family = kwargs.pop('current_family', None)
         super().__init__(*args, **kwargs)
         
         # 设置字段标签和帮助文本
@@ -73,6 +51,18 @@ class EventForm(forms.ModelForm):
         self.fields['time'].required = False
         self.fields['week_order'].required = False
         self.fields['active'].required = False
+    
+    def save(self, commit=True):
+        """重写save方法以自动关联家庭"""
+        instance = super().save(commit=False)
+        
+        # 自动关联家庭
+        if self.current_family:
+            instance.family = self.current_family
+        
+        if commit:
+            instance.save()
+        return instance
 
     def clean(self):
         """表单级别的验证"""

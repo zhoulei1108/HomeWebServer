@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ date|date:"Y年m月d日" }} - 家庭日历</title>
+    {# Bootstrap 5 CSS框架 #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {# Font Awesome图标库 #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        {# 页面主体样式 #}
         body {
             background-color: #f8f9fa;
             padding-top: 60px;
         }
+        {# 顶部导航栏样式 #}
         .header-nav {
             background: #fff;
             padding: 10px 20px;
@@ -22,11 +26,13 @@
             z-index: 999;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        {# 导航链接容器样式 #}
         .nav-links {
             display: flex;
             align-items: center;
             gap: 15px;
         }
+        {# 导航链接样式 #}
         .nav-links a {
             text-decoration: none;
             color: #007bff;
@@ -34,11 +40,62 @@
             border-radius: 4px;
             transition: background-color 0.2s;
         }
+        {# 导航链接悬停效果 #}
         .nav-links a:hover {
             background-color: #e9ecef;
             text-decoration: none;
             color: #0056b3;
         }
+        .nav-links a.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        {# 导航下拉菜单按钮样式 #}
+        .nav-dropdown-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 236, 210, 0.8) 100%);
+            border: 2px solid rgba(255, 182, 193, 0.3);
+            color: #8b6f47;
+            border-radius: 20px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            margin: 0 2px;
+        }
+        
+        .nav-dropdown-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 182, 193, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 236, 210, 0.9) 100%);
+            color: #5f4b8b;
+        }
+        
+        .nav-dropdown-btn:focus {
+            box-shadow: 0 0 0 0.25rem rgba(168, 237, 234, 0.25);
+        }
+        
+        {# 管理后台链接样式 #}
+        .nav-admin-link {
+            text-decoration: none;
+            color: #8b6f47;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(139, 111, 71, 0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        
+        .nav-admin-link:hover {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 154, 158, 0.3);
+            text-decoration: none;
+            color: #fff;
+        }
+        {# 日期容器样式 - 主要内容区域 #}
         .day-container {
             max-width: 800px;
             margin: 30px auto;
@@ -47,6 +104,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        {# 事件卡片样式 #}
         .event-card {
             border-left: 4px solid #007bff;
             background-color: #f8f9fa;
@@ -54,18 +112,22 @@
             margin-bottom: 15px;
             border-radius: 0 4px 4px 0;
         }
+        {# 事件时间样式 #}
         .event-time {
             font-weight: bold;
             color: #007bff;
         }
+        {# 无事件提示样式 #}
         .no-events {
             text-align: center;
             color: #6c757d;
             padding: 40px;
         }
+        {# 事件元数据容器样式 #}
         .event-meta {
             margin-bottom: 10px;
         }
+        {# 事件类型标签样式 #}
         .event-type {
             display: inline-block;
             background: #e9ecef;
@@ -74,6 +136,7 @@
             font-size: 12px;
             margin-right: 10px;
         }
+        {# 优先级徽章基础样式 #}
         .priority-badge {
             display: inline-block;
             padding: 2px 6px;
@@ -82,14 +145,17 @@
             font-weight: 600;
             margin-left: 10px;
         }
+        {# 高优先级样式 - 红色 #}
         .priority-high {
             background: #dc3545;
             color: white;
         }
+        {# 中优先级样式 - 黄色 #}
         .priority-medium {
             background: #ffc107;
             color: #212529;
         }
+        {# 低优先级样式 - 绿色 #}
         .priority-low {
             background: #28a745;
             color: white;
@@ -97,23 +163,60 @@
     </style>
 </head>
 <body>
-    <!-- 顶部导航栏 -->
+    {# 顶部导航栏 - 整合功能，去除重复 #}
     <div class="header-nav">
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col">
                     <div class="nav-links">
+                        {# 日历视图组 #}
                         <a href="{% url 'family_calendar:month_view' %}">
                             <i class="fas fa-calendar-alt me-1"></i>月视图
                         </a>
-                        <a href="{% url 'events:list' %}">
-                            <i class="fas fa-list me-1"></i>提醒管理
+                        <a href="{% url 'family_calendar:day_view' year month day %}" class="active">
+                            <i class="fas fa-calendar-day me-1"></i>日视图
                         </a>
-                        <a href="{% url 'events:create' %}">
-                            <i class="fas fa-bell me-1"></i>新建提醒
-                        </a>
-                        <a href="/admin/">
-                            <i class="fas fa-cog me-1"></i>管理后台
+                        
+                        {# 仅在用户登录时显示家庭相关链接 #}
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'family:dashboard' %}">
+                                <i class="fas fa-home me-1"></i>家庭中心
+                            </a>
+                        {% endif %}
+                        
+                        {# 事件管理下拉菜单 #}
+                        <div class="dropdown d-inline-block">
+                            <button class="btn nav-dropdown-btn dropdown-toggle" type="button" id="eventsDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell me-1"></i>事件管理
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'events:list' %}">
+                                    <i class="fas fa-list me-1"></i>事件列表
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'events:create' %}">
+                                    <i class="fas fa-plus me-1"></i>新建事件
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        {# 家务管理下拉菜单 #}
+                        <div class="dropdown d-inline-block">
+                            <button class="btn nav-dropdown-btn dropdown-toggle" type="button" id="houseworkDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-broom me-1"></i>家务管理
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'housework:list' %}">
+                                    <i class="fas fa-list me-1"></i>家务列表
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'housework:create' %}">
+                                    <i class="fas fa-plus me-1"></i>新建家务
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        {# 管理后台链接 #}
+                        <a href="/admin/" class="nav-admin-link">
+                            <i class="fas fa-cog me-1"></i>管理
                         </a>
                     </div>
                 </div>
@@ -128,8 +231,11 @@
                                     <i class="fas fa-user me-1"></i>{{ user.username }}
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="/admin/auth/user/{{ user.id }}/change/">
-                                        <i class="fas fa-user-edit me-1"></i>个人设置
+                                    <li><a class="dropdown-item" href="{% url 'family:profile' %}">
+                                        <i class="fas fa-user me-1"></i>个人资料
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'family:profile_settings' %}">
+                                        <i class="fas fa-cog me-1"></i>个人设置
                                     </a></li>
                                     <li><a class="dropdown-item" href="/events/">
                                         <i class="fas fa-bell me-1"></i>我的提醒
@@ -151,7 +257,9 @@
         </div>
     </div>
 
+    {# 日期内容容器 #}
     <div class="day-container">
+        {# 页面标题和返回按钮 #}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>{{ date|date:"Y年m月d日" }} {{ date|date:"l" }}</h2>
             <a href="{% url 'family_calendar:month_view_date' date.year date.month %}" class="btn btn-outline-secondary">
@@ -159,25 +267,35 @@
             </a>
         </div>
 
+        {# 检查当天是否有事件 #}
         {% if events %}
+            {# 遍历显示所有事件 #}
             {% for event in events %}
                 <div class="event-card">
                     <div class="row">
+                        {# 事件信息左侧列 #}
                         <div class="col-md-8">
+                            {# 事件名称 #}
                             <h5>{{ event.name }}</h5>
+                            {# 事件元数据：类型和优先级 #}
                             <div class="event-meta mb-2">
+                                {# 事件类型标签 #}
                                 <span class="event-type">{{ event.event_type_display_with_icon }}</span>
+                                {# 优先级徽章 - 根据优先级数值显示不同颜色 #}
                                 {% if event.priority %}
                                     <span class="priority-badge {% if event.priority >= 7 %}priority-high{% elif event.priority >= 4 %}priority-medium{% else %}priority-low{% endif %}">
                                         优先级 {{ event.priority }}
                                     </span>
                                 {% endif %}
                             </div>
+                            {# 事件描述（如果有的话） #}
                             {% if event.description %}
                                 <p class="text-muted mb-2">{{ event.description }}</p>
                             {% endif %}
                         </div>
+                        {# 事件时间右侧列 #}
                         <div class="col-md-4 text-end">
+                            {# 事件时间或全天标识 #}
                             <div class="event-time">
                                 {% if event.time %}
                                     {{ event.time|date:"H:i" }}
@@ -185,6 +303,7 @@
                                     全天
                                 {% endif %}
                             </div>
+                            {# 优先级数值显示 #}
                             <small class="text-muted">
                                 优先级: {{ event.priority }}
                             </small>
@@ -193,6 +312,7 @@
                 </div>
             {% endfor %}
         {% else %}
+            {# 当天没有事件时的提示信息 #}
             <div class="no-events">
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
                 <h4>当天没有事件</h4>

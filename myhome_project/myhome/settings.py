@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.family",
     "apps.family_calendar",
     "apps.events.apps.EventsConfig",
     "apps.housework.apps.HouseworkConfig",

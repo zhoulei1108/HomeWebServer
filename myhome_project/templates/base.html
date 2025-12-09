@@ -26,13 +26,82 @@
     main {
       flex: 1;
     }
+    
+    /* 自定义导航栏样式 */
+    .custom-navbar {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 236, 210, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid rgba(255, 182, 193, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 0 0 20px 20px;
+    }
+    
+    .custom-navbar .navbar-brand {
+      color: #8b6f47;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .custom-navbar .navbar-nav .nav-link {
+      color: #8b6f47;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(139, 111, 71, 0.2);
+      border-radius: 20px;
+      margin: 0 4px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .custom-navbar .navbar-nav .nav-link:hover {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 154, 158, 0.3);
+      color: #fff;
+    }
+    
+    .custom-navbar .navbar-nav .nav-link.active {
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      color: #5f4b8b;
+      box-shadow: 0 4px 12px rgba(168, 237, 234, 0.3);
+    }
+    
+    .custom-navbar .navbar-toggler {
+      border-color: rgba(139, 111, 71, 0.3);
+    }
+    
+    .custom-navbar .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(139, 111, 71, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+    
+    .custom-navbar .dropdown-menu {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 182, 193, 0.3);
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .custom-navbar .dropdown-item {
+      color: #8b6f47;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .custom-navbar .dropdown-item:hover {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
-  <!-- 导航栏 -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <!-- 统一样式导航栏 -->
+  <nav class="navbar navbar-expand-lg custom-navbar">
     <div class="container">
-      <a class="navbar-brand" href="/calendar/">
+      <a class="navbar-brand" href="{% url 'family_calendar:month_view' %}">
         <i class="fas fa-calendar-alt me-2"></i>家庭日历
       </a>
       
@@ -42,34 +111,53 @@
       
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
+          {# 日历视图组 #}
           <li class="nav-item">
-            <a class="nav-link" href="/calendar/">
-              <i class="fas fa-calendar me-1"></i>月视图
+            <a class="nav-link" href="{% url 'family_calendar:month_view' %}">
+              <i class="fas fa-calendar-alt me-1"></i>月视图
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/events/">
-              <i class="fas fa-list me-1"></i>事件管理
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/housework/">
-              <i class="fas fa-broom me-1"></i>家务管理
-            </a>
-          </li>
+          
+          {# 仅在用户登录时显示家庭相关链接 #}
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'family:dashboard' %}">
+                <i class="fas fa-home me-1"></i>家庭中心
+              </a>
+            </li>
+          {% endif %}
+          
+          {# 事件管理下拉菜单 #}
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="houseworkDropdown" role="button" data-bs-toggle="dropdown">
-              <i class="fas fa-plus me-1"></i>家务操作
+            <a class="nav-link dropdown-toggle" href="#" id="eventsDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-bell me-1"></i>事件管理
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/housework/create/">
-                <i class="fas fa-plus me-1"></i>新建家务
+              <li><a class="dropdown-item" href="{% url 'events:list' %}">
+                <i class="fas fa-list me-1"></i>事件列表
               </a></li>
-              <li><a class="dropdown-item" href="/housework/statistics/">
-                <i class="fas fa-chart-bar me-1"></i>家务统计
+              <li><a class="dropdown-item" href="{% url 'events:create' %}">
+                <i class="fas fa-plus me-1"></i>新建事件
               </a></li>
             </ul>
           </li>
+          
+          {# 家务管理下拉菜单 #}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="houseworkDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-broom me-1"></i>家务管理
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'housework:list' %}">
+                <i class="fas fa-list me-1"></i>家务列表
+              </a></li>
+              <li><a class="dropdown-item" href="{% url 'housework:create' %}">
+                <i class="fas fa-plus me-1"></i>新建家务
+              </a></li>
+            </ul>
+          </li>
+          
+          {# 管理后台链接 #}
           <li class="nav-item">
             <a class="nav-link" href="/admin/">
               <i class="fas fa-cog me-1"></i>管理后台
@@ -83,24 +171,30 @@
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                 <i class="fas fa-user me-1"></i>{{ user.username }}
               </a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/calendar/event/new/">
-                  <i class="fas fa-plus me-1"></i>新建事件
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'family:profile' %}">
+                  <i class="fas fa-user me-1"></i>个人资料
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'family:profile_settings' %}">
+                  <i class="fas fa-cog me-1"></i>个人设置
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'events:list' %}">
+                  <i class="fas fa-bell me-1"></i>我的提醒
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="/accounts/logout/">
-                  <i class="fas fa-sign-out-alt me-1"></i>登出
+                  <i class="fas fa-sign-out-alt me-1"></i>退出登录
                 </a></li>
               </ul>
             </li>
           {% else %}
             <li class="nav-item">
-              <a class="nav-link" href="/accounts/login/">
+              <a class="nav-link" href="{% url 'login' %}">
                 <i class="fas fa-sign-in-alt me-1"></i>登录
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/accounts/register/">
+              <a class="nav-link" href="{% url 'register' %}">
                 <i class="fas fa-user-plus me-1"></i>注册
               </a>
             </li>

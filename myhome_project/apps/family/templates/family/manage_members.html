@@ -1,0 +1,292 @@
+{% extends "family/base_family.html" %}
+{% load static %}
+
+{% block title %}管理 {{ family.name }} 成员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="family-card">
+                <div class="family-header" style="background: linear-gradient(135deg, {{ family.color_theme }} 0%, #fed6e3 100%);">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="family-name">
+                                {% if family.avatar %}
+                                    <img src="{{ family.avatar.url }}" class="family-avatar me-3" style="width: 60px; height: 60px;">
+                                {% endif %}
+                                {{ family.name }} - 成员管理
+                            </h2>
+                            <p class="mb-0" style="opacity: 0.9;">共 {{ members.count }} 位成员</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{% url 'family:detail' family.id %}" class="btn btn-light me-2">
+                                <i class="fas fa-arrow-left me-2"></i>返回家庭详情
+                            </a>
+                            {% if user_member.has_permission('invite_members') %}
+                                <button type="button" class="btn btn-primary-family" data-bs-toggle="modal" data-bs-target="#inviteMemberModal">
+                                    <i class="fas fa-user-plus me-2"></i>邀请新成员
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="family-card">
+                <div class="p-4">
+                    <h5 style="color: #8b6f47; margin-bottom: 20px;">
+                        <i class="fas fa-users me-2"></i>家庭成员列表
+                    </h5>
+
+                    {% for member in members %}
+                        <div class="member-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-1">
+                                    <div class="member-avatar">
+                                        {{ member.display_name|first|upper }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold">{{ member.display_name }}</div>
+                                    <div class="small text-muted">{{ member.user.username }}</div>
+                                    <div class="small text-muted">加入于 {{ member.joined_at|date:"Y年m月d日" }}</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="role-badge role-{{ member.role }}">
+                                        {% if member.role == 'owner' %}👑{% elif member.role == 'admin' %}⭐{% else %}👤{% endif %}
+                                        {{ member.get_role_display }}
+                                    </span>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="row small">
+                                        <div class="col-6">
+                                            <i class="fas fa-calendar text-muted me-1"></i>
+                                            {% if member.can_create_events %}创建事件{% else %}无权限{% endif %}
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-broom text-muted me-1"></i>
+                                            {% if member.can_create_housework %}创建家务{% else %}无权限{% endif %}
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-user-plus text-muted me-1"></i>
+                                            {% if member.can_invite_members %}邀请成员{% else %}无权限{% endif %}
+                                        </div>
+                                        <div class="col-6">
+                                            <i class="fas fa-cog text-muted me-1"></i>
+                                            {% if member.can_manage_family %}管理家庭{% else %}无权限{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-family" data-bs-toggle="modal" data-bs-target="#memberProfileModal{{ member.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if user_member.has_permission('manage_family') and member.role != 'owner' %}
+                                            <button type="button" class="btn btn-sm btn-family" data-bs-toggle="modal" data-bs-target="#editMemberModal{{ member.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        {% if user_member.has_permission('manage_family') and member.role != 'owner' and member.user != request.user %}
+                                            <form method="post" action="{% url 'family:remove_member' family.id member.id %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要移除 {{ member.display_name }} 吗？')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 成员资料模态框 -->
+                        <div class="modal fade" id="memberProfileModal{{ member.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background: linear-gradient(135deg, {{ family.color_theme }} 0%, #fed6e3 100%);">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-user me-2"></i>成员资料
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="text-center mb-4">
+                                            <div class="member-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px;">
+                                                {{ member.display_name|first|upper }}
+                                            </div>
+                                            <h4>{{ member.display_name }}</h4>
+                                            <p class="text-muted">@{{ member.user.username }}</p>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <strong>角色：</strong>
+                                                <span class="role-badge role-{{ member.role }}">
+                                                    {% if member.role == 'owner' %}👑{% elif member.role == 'admin' %}⭐{% else %}👤{% endif %}
+                                                    {{ member.get_role_display }}
+                                                </span>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>加入时间：</strong><br>
+                                                <small class="text-muted">{{ member.joined_at|date:"Y年m月d日" }}</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <strong>最后活跃：</strong><br>
+                                                <small class="text-muted">{{ member.last_active|date:"Y年m月d日 H:i" }}</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>家庭昵称：</strong><br>
+                                                <small class="text-muted">{{ member.nickname|default:"未设置" }}</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <h6>权限设置</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" {% if member.can_create_events %}checked{% endif %} disabled>
+                                                        <label class="form-check-label">创建事件</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" {% if member.can_create_housework %}checked{% endif %} disabled>
+                                                        <label class="form-check-label">创建家务</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" {% if member.can_invite_members %}checked{% endif %} disabled>
+                                                        <label class="form-check-label">邀请成员</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" {% if member.can_manage_family %}checked{% endif %} disabled>
+                                                        <label class="form-check-label">管理家庭</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 编辑成员模态框 -->
+                        {% if user_member.has_permission('manage_family') and member.role != 'owner' %}
+                            <div class="modal fade" id="editMemberModal{{ member.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header" style="background: linear-gradient(135deg, {{ family.color_theme }} 0%, #fed6e3 100%);">
+                                            <h5 class="modal-title">
+                                                <i class="fas fa-edit me-2"></i>编辑成员信息
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="post" action="{% url 'family:update_member' family.id member.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="nickname_{{ member.id }}" class="form-label">家庭昵称</label>
+                                                    <input type="text" class="form-control" id="nickname_{{ member.id }}" name="nickname" value="{{ member.nickname }}">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="role_{{ member.id }}" class="form-label">角色</label>
+                                                    <select class="form-select" id="role_{{ member.id }}" name="role">
+                                                        <option value="member" {% if member.role == 'member' %}selected{% endif %}>成员</option>
+                                                        <option value="admin" {% if member.role == 'admin' %}selected{% endif %}>管理员</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <h6>权限设置</h6>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="can_create_events_{{ member.id }}" name="can_create_events" {% if member.can_create_events %}checked{% endif %}>
+                                                                <label class="form-check-label" for="can_create_events_{{ member.id }}">创建事件</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="can_create_housework_{{ member.id }}" name="can_create_housework" {% if member.can_create_housework %}checked{% endif %}>
+                                                                <label class="form-check-label" for="can_create_housework_{{ member.id }}">创建家务</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="can_invite_members_{{ member.id }}" name="can_invite_members" {% if member.can_invite_members %}checked{% endif %}>
+                                                                <label class="form-check-label" for="can_invite_members_{{ member.id }}">邀请成员</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" id="can_manage_family_{{ member.id }}" name="can_manage_family" {% if member.can_manage_family %}checked{% endif %}>
+                                                                <label class="form-check-label" for="can_manage_family_{{ member.id }}">管理家庭</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                <button type="submit" class="btn btn-primary-family">保存</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 邀请成员模态框 -->
+<div class="modal fade" id="inviteMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, {{ family.color_theme }} 0%, #fed6e3 100%);">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>邀请新成员
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'family:invite' family.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="invitee_username" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" required>
+                        <div class="form-text">请输入要邀请的用户用户名</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">邀请消息</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" placeholder="（可选）给被邀请人的留言"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary-family">
+                        <i class="fas fa-paper-plane me-2"></i>发送邀请
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "family/base_family.html" %}
+
+{% block title %}{{ current_family.name }} - 家庭中心{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 家庭信息卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="family-card">
+                <div class="family-header" style="background: linear-gradient(135deg, {{ current_family.color_theme }} 0%, #fed6e3 100%);">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="family-name">
+                                {% if current_family.avatar %}
+                                    <img src="{{ current_family.avatar.url }}" class="family-avatar me-3" style="width: 60px; height: 60px;">
+                                {% endif %}
+                                {{ current_family.name }}
+                            </h2>
+                            {% if current_family.description %}
+                                <p class="mb-0" style="opacity: 0.9;">{{ current_family.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'family:detail' current_family.id %}">
+                                        <i class="fas fa-info-circle me-2"></i>家庭详情
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'family:profile' %}">
+                                        <i class="fas fa-user me-2"></i>个人档案
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 统计信息 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-users fa-2x mb-3" style="color: #ff9a9e;"></i>
+                <div class="stats-number">{{ member_count }}</div>
+                <div class="text-muted">家庭成员</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-envelope fa-2x mb-3" style="color: #a8edea;"></i>
+                <div class="stats-number">{{ pending_invitations_count }}</div>
+                <div class="text-muted">待处理邀请</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-calendar fa-2x mb-3" style="color: #ffecd2;"></i>
+                <div class="stats-number">{{ user_invitations.count }}</div>
+                <div class="text-muted">收到邀请</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <i class="fas fa-crown fa-2x mb-3" style="color: #fcb69f;"></i>
+                <div class="stats-number">Member</div>
+                <div class="text-muted">我的角色</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 快捷操作 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="family-card">
+                <div class="p-4">
+                    <h5 style="color: #8b6f47; margin-bottom: 20px;">
+                        <i class="fas fa-rocket me-2"></i>快捷操作
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-primary-family w-100" data-bs-toggle="modal" data-bs-target="#inviteMemberModal">
+                                <i class="fas fa-user-plus me-2"></i>邀请成员
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'family:manage_members' current_family.id %}" class="btn btn-family w-100">
+                                <i class="fas fa-users me-2"></i>管理成员
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-family w-100" data-bs-toggle="modal" data-bs-target="#editFamilyModal">
+                                <i class="fas fa-cog me-2"></i>家庭设置
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'events:create' %}" class="btn btn-family w-100">
+                                <i class="fas fa-bell me-2"></i>新建提醒
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- 家庭成员 -->
+        <div class="col-md-6">
+            <div class="family-card">
+                <div class="p-4">
+                    <h5 style="color: #8b6f47; margin-bottom: 20px;">
+                        <i class="fas fa-users me-2"></i>家庭成员
+                    </h5>
+                    
+                    <div class="row">
+                        {% for member in recent_members %}
+                            <div class="col-12 mb-3">
+                                <div class="member-card">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <div class="member-avatar">
+                                                {{ member.display_name|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="fw-bold">{{ member.display_name }}</div>
+                                            <div class="small text-muted">{{ member.user.username }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <span class="role-badge role-{{ member.role }}">
+                                                {% if member.role == 'owner' %}👑{% elif member.role == 'admin' %}⭐{% else %}👤{% endif %}
+                                                {{ member.get_role_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12 text-center py-3">
+                                <p class="text-muted">暂无其他成员</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 邀请成员模态框 -->
+<div class="modal fade" id="inviteMemberModal" tabindex="-1" aria-labelledby="inviteMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, {{ current_family.color_theme }} 0%, #fed6e3 100%);">
+                <h5 class="modal-title" id="inviteMemberModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>邀请新成员
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'family:invite' current_family.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="invitee_username" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="invitee_username" name="invitee_username" required>
+                        <div class="form-text">请输入要邀请的用户用户名</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">邀请消息</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" placeholder="（可选）给被邀请人的留言"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary-family">
+                        <i class="fas fa-paper-plane me-2"></i>发送邀请
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

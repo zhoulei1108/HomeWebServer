@@ -209,10 +209,20 @@ def month_view(request, year=None, month=None):
     holidays = build_holiday_map(start_date, end_date)
     lunar_data = build_lunar_data(year, month)
     
+    # 获取当前用户的家庭
+    from apps.family.models import get_current_family
+    current_family = get_current_family(request.user) if request.user.is_authenticated else None
+    
     # 获取所有启用的事件，并计算它们在指定月份的发生情况
     events_by_date = {}
     events_by_day = {}
+    # 只显示当前家庭的事件
     active_events = Event.objects.active()
+    if current_family:
+        active_events = active_events.filter(family=current_family)
+    else:
+        # 如果没有家庭，显示空结果
+        active_events = Event.objects.none()
 
     def store_event(target_date, event):
         if target_date not in events_by_date:
