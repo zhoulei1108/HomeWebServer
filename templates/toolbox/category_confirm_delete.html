@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - 百宝箱{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-exclamation-triangle me-2"></i>删除分类
+          </h4>
+        </div>
+        <div class="card-body">
+          <p class="lead">确定要删除分类 "<strong>{{ category.name }}</strong>" 吗？</p>
+          
+          {% if category.links.all %}
+            <div class="alert alert-warning">
+              <i class="fas fa-warning me-2"></i>
+              注意：该分类下有 <strong>{{ category.links.all.count }}</strong> 个链接，删除分类将同时删除所有链接！
+            </div>
+          {% endif %}
+          
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i>确认删除
+              </button>
+              <a href="{% url 'toolbox:index' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i>取消
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

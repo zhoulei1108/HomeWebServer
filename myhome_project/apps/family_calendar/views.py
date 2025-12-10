@@ -290,7 +290,7 @@ def month_view(request, year=None, month=None):
         'today': timezone.localdate(),
     }
     
-    return render(request, 'family_calendar/month_view.html', context)
+    return render(request, 'calendar/month_view.html', context)
 
 
 def day_view(request, year, month, day):
@@ -405,7 +405,7 @@ def day_view(request, year, month, day):
         'current_family': current_family,
     }
     
-    return render(request, 'family_calendar/day_view.html', context)
+    return render(request, 'calendar/day_view.html', context)
 
 
 def register(request):

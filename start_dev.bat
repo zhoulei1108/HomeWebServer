@@ -1,32 +1,35 @@
 @echo off
-echo === Django 家庭日历系统启动脚本 ===
+echo 正在启动家庭日历系统...
+echo.
 
-REM 检查虚拟环境
-if not exist ".venv_django\Scripts\python.exe" (
-    echo 错误: 虚拟环境未找到！
-    echo 请先运行以下命令创建虚拟环境:
-    echo python -m venv .venv_django
-    echo .venv_django\Scripts\activate
-    echo pip install -r requirements.txt
+cd /d "%~dp0\myhome_project"
+
+REM 检查 Python 环境
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 未找到 Python，请确保已安装 Python 3.8+
     pause
     exit /b 1
 )
 
-REM 激活虚拟环境并启动Django
-echo 激活虚拟环境...
-call .venv_django\Scripts\activate.bat
+echo [1/2] 正在执行数据库迁移...
+python manage.py makemigrations toolbox 2>nul
+python manage.py migrate
 
-echo 进入项目目录...
-cd myhome_project
+if errorlevel 1 (
+    echo [错误] 数据库迁移失败
+    pause
+    exit /b 1
+)
 
-echo 检查Django配置...
-python manage.py check
-
-echo 启动开发服务器...
-echo 访问地址: http://127.0.0.1:8000/
-echo 按 Ctrl+C 停止服务器
 echo.
+echo [2/2] 正在启动开发服务器...
+echo 访问地址: http://127.0.0.1:8000/
+echo.
+python manage.py runserver 0.0.0.0:8000
 
-python manage.py runserver
-
-pause
+if errorlevel 1 (
+    echo [错误] 服务器启动失败
+    pause
+    exit /b 1
+)

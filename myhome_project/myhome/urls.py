@@ -45,4 +45,5 @@ urlpatterns = [
     path("calendar/", include("apps.family_calendar.urls")),
     path("events/", include("apps.events.urls")),
     path("housework/", include("apps.housework.urls")),
+    path("toolbox/", include("apps.toolbox.urls")),
 ]

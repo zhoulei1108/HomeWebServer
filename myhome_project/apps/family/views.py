@@ -467,20 +467,35 @@ def invitations(request):
     """邀请列表"""
     user = request.user
     
-    # 发送的邀请
-    sent_invitations = Invitation.objects.filter(
-        inviter=user
-    ).order_by('-created_at')
+    # 获取当前家庭
+    current_family = get_current_family(user)
     
-    # 接收的邀请
+    # 发送的邀请 - 只显示当前家庭的邀请
+    if current_family:
+        sent_invitations = Invitation.objects.filter(
+            inviter=user,
+            family=current_family
+        ).order_by('-created_at')
+    else:
+        sent_invitations = Invitation.objects.none()
+    
+    # 接收的邀请 - 按状态分类
     received_invitations = Invitation.objects.filter(
         invitee=user
     ).order_by('-created_at')
     
+    # 待处理的邀请（用户应该看到的）
+    pending_invitations = received_invitations.filter(status='pending')
+    
+    # 已处理的邀请（用于历史记录）
+    processed_invitations = received_invitations.exclude(status='pending')
+    
     context = {
         'sent_invitations': sent_invitations,
         'received_invitations': received_invitations,
-        'invitations': received_invitations,  # 兼容模板中的使用
+        'pending_invitations': pending_invitations,
+        'processed_invitations': processed_invitations,
+        'invitations': pending_invitations,  # 兼容模板中的使用，默认只显示待处理的
         'current_family': get_current_family(user),
     }
     

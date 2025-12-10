@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}百宝箱 - 家庭日历{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="fas fa-toolbox text-primary me-2"></i>百宝箱
+      <small class="text-muted fs-6">我的自定义导航</small>
+    </h2>
+    <div>
+      <a href="{% url 'toolbox:category_create' %}" class="btn btn-primary btn-sm me-2">
+        <i class="fas fa-folder-plus me-1"></i>添加分类
+      </a>
+      <a href="{% url 'toolbox:link_create' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-plus-circle me-1"></i>添加链接
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if categories %}
+    <div class="row">
+      {% for category in categories %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center" 
+                 style="background-color: {{ category.color }}20;">
+              <h5 class="mb-0">
+                <i class="{{ category.icon }} me-2"></i>{{ category.name }}
+                <span class="badge bg-secondary ms-2">{{ category.links.all.count }}</span>
+              </h5>
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'toolbox:category_edit' category.pk %}" 
+                   class="btn btn-outline-secondary" title="编辑分类">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'toolbox:category_delete' category.pk %}" 
+                   class="btn btn-outline-danger" title="删除分类">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if category.links.all %}
+                <div class="list-group list-group-flush">
+                  {% for link in category.links.all %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                      <div class="flex-grow-1">
+                        <a href="{{ link.url }}" 
+                           {% if link.is_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                           class="text-decoration-none fw-bold" 
+                           title="{{ link.description|default:link.title }}">
+                          <i class="{{ link.icon }} me-2 text-primary"></i>{{ link.title }}
+                        </a>
+                        {% if link.description %}
+                          <div class="text-muted small mt-1 ms-4">{{ link.description }}</div>
+                        {% endif %}
+                      </div>
+                      <div class="btn-group btn-group-sm ms-2">
+                        <a href="{% url 'toolbox:link_edit' link.pk %}" 
+                           class="btn btn-outline-primary" title="编辑">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'toolbox:link_delete' link.pk %}" 
+                           class="btn btn-outline-danger" title="删除">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="text-center text-muted py-4">
+                  <i class="fas fa-link-slash fa-2x mb-3"></i>
+                  <p>暂无链接</p>
+                  <a href="{% url 'toolbox:link_create' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>添加链接
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-toolbox fa-3x text-muted mb-4"></i>
+      <h4 class="text-muted mb-3">百宝箱为空</h4>
+      <p class="text-muted mb-4">开始添加分类和链接来整理你的工具吧！</p>
+      <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'toolbox:category_create' %}" class="btn btn-primary">
+          <i class="fas fa-folder-plus me-2"></i>创建第一个分类
+        </a>
+        <a href="{% url 'toolbox:link_create' %}" class="btn btn-success">
+          <i class="fas fa-plus-circle me-2"></i>直接添加链接
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+.list-group-item:hover {
+  background-color: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.card-header h5 {
+  color: #495057;
+}
+
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+.list-group-item .btn-group {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.list-group-item:hover .btn-group {
+  opacity: 1;
+}
+</style>
+{% endblock %}
