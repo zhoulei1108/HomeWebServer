@@ -79,7 +79,7 @@ def create_event(request):
             initial_data['event_type'] = request.GET.get('type')
         form = EventForm(initial=initial_data)
 
-    return safe_render(request, "myhome/events/create_event.html", {
+    return safe_render(request, "events/create_event.html", {
         "form": form,
         "title": "创建新事件",
         "button_text": "创建事件"
@@ -112,7 +112,7 @@ def event_detail(request, pk):
         "title": event.name,
     }
     
-    return safe_render(request, "myhome/events/event_detail.html", context)
+    return safe_render(request, "events/event_detail.html", context)
 
 def event_list(request):
     """
@@ -184,7 +184,7 @@ def event_list(request):
             "title": "事件列表",
         }
         
-        return safe_render(request, "myhome/events/event_list.html", context)
+        return safe_render(request, "events/event_list.html", context)
         
     except Exception as e:
         # 记录错误并返回简单的列表
@@ -201,7 +201,7 @@ def event_list(request):
             "title": "事件列表",
         }
         
-        return safe_render(request, "myhome/events/event_list.html", context)
+        return safe_render(request, "events/event_list.html", context)
 
 @login_required
 def toggle_event_status(request, pk):
@@ -268,7 +268,7 @@ def upcoming_events(request):
         "title": f"未来{days}天内的事件",
     }
     
-    return safe_render(request, "myhome/events/upcoming_events.html", context)
+    return safe_render(request, "events/upcoming_events.html", context)
 
 @login_required
 def delete_event(request, pk):
@@ -310,12 +310,12 @@ def delete_event(request, pk):
         "title": "删除事件",
     }
     
-    return safe_render(request, "myhome/events/delete_confirm.html", context)
+    return safe_render(request, "events/delete_confirm.html", context)
 
 def create_success(request):
     """
     创建成功页面（保持向后兼容）
     """
-    return safe_render(request, "myhome/events/create_success.html", {
+    return safe_render(request, "events/create_success.html", {
         "title": "创建成功"
     })
