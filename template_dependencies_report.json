@@ -1,0 +1,651 @@
+{
+  "timestamp": "2025-12-11T02:03:03.731828",
+  "total_templates": 44,
+  "errors": [
+    "视图文件 myhome_project\\apps\\family\\views.py 行 191 引用的模板不存在: family/profile_settings.html",
+    "视图文件 myhome_project\\apps\\family\\views.py 行 229 引用的模板不存在: family/profile_public.html",
+    "视图文件 myhome_project\\apps\\family\\views.py 行 302 引用的模板不存在: family/search_family.html",
+    "视图文件 myhome_project\\apps\\housework\\views.py 行 441 引用的模板不存在: housework/template_list.html",
+    "视图文件 myhome_project\\apps\\housework\\views.py 行 463 引用的模板不存在: housework/create_template.html"
+  ],
+  "warnings": [],
+  "dependencies": {
+    "templates\\base.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "family_calendar:month_view",
+        "family:dashboard",
+        "events:list",
+        "events:create",
+        "housework:list",
+        "housework:create",
+        "family:profile",
+        "family:profile_settings",
+        "family:switch",
+        "family:dashboard",
+        "events:list",
+        "login",
+        "register"
+      ]
+    },
+    "templates\\_user_nav.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "events:list",
+        "events:create"
+      ]
+    },
+    "templates\\calendar\\day_view.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "family_calendar:day_view",
+        "family:dashboard",
+        "events:list",
+        "events:create",
+        "housework:list",
+        "housework:create",
+        "family:profile",
+        "family:profile_settings",
+        "family_calendar:month_view_date",
+        "events:detail"
+      ]
+    },
+    "templates\\calendar\\month_view.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "family:dashboard",
+        "events:list",
+        "events:create",
+        "housework:list",
+        "housework:create",
+        "family:profile",
+        "family:profile_settings",
+        "login",
+        "register",
+        "family_calendar:month_view_date",
+        "family_calendar:month_view",
+        "family_calendar:month_view_date",
+        "family_calendar:day_view"
+      ]
+    },
+    "templates\\events\\create_event.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "events:list",
+        "events:create",
+        "events:list"
+      ]
+    },
+    "templates\\events\\create_success.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "events:create",
+        "events:list"
+      ]
+    },
+    "templates\\events\\delete_confirm.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "events:list",
+        "events:create",
+        "events:list"
+      ]
+    },
+    "templates\\events\\event_detail.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "events:list",
+        "events:create",
+        "events:upcoming"
+      ]
+    },
+    "templates\\events\\event_list.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family_calendar:month_view",
+        "events:list",
+        "events:create",
+        "events:create",
+        "events:upcoming",
+        "events:list",
+        "events:event_detail",
+        "events:toggle_status",
+        "events:delete",
+        "events:create"
+      ]
+    },
+    "templates\\events\\upcoming_events.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "events:list",
+        "events:create",
+        "events:event_detail",
+        "events:create"
+      ]
+    },
+    "templates\\family\\base_family.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": []
+    },
+    "templates\\family\\create_family.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard"
+      ]
+    },
+    "templates\\family\\dashboard.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:switch",
+        "family:dashboard",
+        "family:switch",
+        "family:profile_settings",
+        "family:search",
+        "family:profile",
+        "family:dashboard",
+        "events:create",
+        "events:list",
+        "housework:list",
+        "family_calendar:month_view",
+        "family:dashboard",
+        "family:profile_settings",
+        "family:dashboard",
+        "family:profile",
+        "family:profile",
+        "family:invitations",
+        "family:accept_invitation",
+        "family:reject_invitation",
+        "family_calendar:month_view",
+        "events:list",
+        "housework:list",
+        "family:search",
+        "family:profile",
+        "family:send_invitation",
+        "family:profile_settings"
+      ]
+    },
+    "templates\\family\\dashboard_test.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:profile",
+        "family:profile",
+        "events:create",
+        "family:send_invitation"
+      ]
+    },
+    "templates\\family\\family_detail.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:profile",
+        "events:create",
+        "housework:create",
+        "family_calendar:month_view"
+      ]
+    },
+    "templates\\family\\invitation_list.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:accept_invitation",
+        "family:reject_invitation",
+        "family:search",
+        "family:dashboard",
+        "family:create"
+      ]
+    },
+    "templates\\family\\invite_member.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard"
+      ]
+    },
+    "templates\\family\\manage_members.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:remove_member",
+        "family:profile_settings",
+        "family:send_invitation"
+      ]
+    },
+    "templates\\family\\no_family.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:create",
+        "family:search",
+        "family:invitations",
+        "family:join_by_code"
+      ]
+    },
+    "templates\\family\\profile.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:dashboard"
+      ]
+    },
+    "templates\\housework\\create_housework.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": [
+        "housework:list"
+      ]
+    },
+    "templates\\housework\\edit_housework.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "housework:detail",
+        "housework:list"
+      ]
+    },
+    "templates\\housework\\housework_detail.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "housework:edit",
+        "housework:delete",
+        "housework:list"
+      ]
+    },
+    "templates\\housework\\housework_list.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": [
+        "housework:create",
+        "housework:list",
+        "housework:detail",
+        "housework:detail",
+        "housework:edit",
+        "housework:delete",
+        "housework:create"
+      ]
+    },
+    "templates\\housework\\statistics.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": []
+    },
+    "templates\\registration\\logged_out.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "login",
+        "family_calendar:month_view"
+      ]
+    },
+    "templates\\registration\\login.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "register"
+      ]
+    },
+    "templates\\registration\\register.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "login"
+      ]
+    },
+    "myhome_project\\apps\\events\\templates\\myhome\\events\\create_event.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": []
+    },
+    "myhome_project\\apps\\events\\templates\\myhome\\events\\create_success.html": {
+      "extends": [],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "events:create"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\base_family.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": []
+    },
+    "myhome_project\\apps\\family\\templates\\family\\create_family.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\dashboard.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:profile_settings",
+        "family:search",
+        "family:profile",
+        "family:dashboard",
+        "events:create",
+        "events:list",
+        "housework:list",
+        "family_calendar:month_view",
+        "family:dashboard",
+        "family:profile_settings",
+        "family:dashboard",
+        "family:profile",
+        "family:profile",
+        "family:invitations",
+        "family:accept_invitation",
+        "family:reject_invitation",
+        "family_calendar:month_view",
+        "events:list",
+        "housework:list",
+        "family:search",
+        "family:profile",
+        "family:send_invitation",
+        "family:profile_settings"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\dashboard_test.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:profile",
+        "family:profile",
+        "events:create",
+        "family:send_invitation"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\family_detail.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:profile",
+        "events:create",
+        "housework:create",
+        "family_calendar:month_view"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\invitation_list.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:accept_invitation",
+        "family:reject_invitation",
+        "family:search",
+        "family:dashboard",
+        "family:create"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\invite_member.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:dashboard"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\manage_members.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "static"
+      ],
+      "static_files": [],
+      "urls": [
+        "family:dashboard",
+        "family:remove_member",
+        "family:profile_settings",
+        "family:send_invitation"
+      ]
+    },
+    "myhome_project\\apps\\family\\templates\\family\\no_family.html": {
+      "extends": [
+        "family/base_family.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "family:create",
+        "family:search",
+        "family:invitations",
+        "family:join_by_code"
+      ]
+    },
+    "myhome_project\\apps\\housework\\templates\\housework\\create_housework.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": [
+        "housework:list"
+      ]
+    },
+    "myhome_project\\apps\\housework\\templates\\housework\\edit_housework.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "housework:detail",
+        "housework:list"
+      ]
+    },
+    "myhome_project\\apps\\housework\\templates\\housework\\housework_detail.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [],
+      "static_files": [],
+      "urls": [
+        "housework:edit",
+        "housework:delete",
+        "housework:list"
+      ]
+    },
+    "myhome_project\\apps\\housework\\templates\\housework\\housework_list.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": [
+        "housework:create",
+        "housework:list",
+        "housework:detail",
+        "housework:detail",
+        "housework:edit",
+        "housework:delete",
+        "housework:create"
+      ]
+    },
+    "myhome_project\\apps\\housework\\templates\\housework\\statistics.html": {
+      "extends": [
+        "base.html"
+      ],
+      "includes": [],
+      "custom_tags": [
+        "dict_extras"
+      ],
+      "static_files": [],
+      "urls": []
+    }
+  }
+}
